@@ -1,56 +1,99 @@
 import Background from "@/components/backgroundImage";
-import { View, Text, StyleSheet, Pressable, } from "react-native";
+import {
+    View,
+    Text,
+    StyleSheet,
+    Pressable,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform
+} from "react-native";
+
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
-import {  useRouter } from "expo-router";
-
+import { useRouter } from "expo-router";
 
 export default function Index() {
+
     const router = useRouter();
+
     return (
         <Background source={require("@/assets/img/ARTBACKGROUNDBLACK.png")}>
-            <View style={styles.container}>
 
-                <View style={styles.top}>
-                    <Text style={styles.nameApp}>FRILA</Text>
-                </View>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
 
-                <View style={styles.forms}>
-                    <Text style={styles.inputText}>E-mail</Text>
-                    <Input />
-                    <Text style={styles.inputText}>Senha</Text>
-                    <Input />
+                <ScrollView
+                    contentContainerStyle={styles.container}
+                    showsVerticalScrollIndicator={false}
+                >
 
-                    <Text style={styles.redefinir}>Esqueceu sua senha? <Text style={styles.link}>Redefina aqui</Text></Text>
+                    <View style={styles.top}>
+                        <Text style={styles.nameApp}>FRILA</Text>
+                    </View>
 
-                    <Pressable style={styles.button}>
-                        <Text style={styles.buttonText}>ENTRAR</Text>
-                    </Pressable>
+                    <View style={styles.forms}>
 
-                    <Text style={styles.cadastrar}>Não tem uma conta? <Text style={styles.link} >Cadastre-se</Text></Text>
-                </View>
+                        <Text style={styles.inputText}>Nome</Text>
+                        <Input />
 
-            </View>
+                        <Text style={styles.inputText}>E-mail</Text>
+                        <Input />
+
+                        <Text style={styles.inputText}>CPF</Text>
+                        <Input />
+
+                        <Text style={styles.inputText}>Telefone</Text>
+                        <Input />
+
+                        <Text style={styles.inputText}>Senha</Text>
+                        <Input />
+
+                        <Text style={styles.inputText}>Confirmação de Senha</Text>
+                        <Input />
+
+                        <Pressable style={styles.button}>
+                            <Text style={styles.buttonText}>ENTRAR</Text>
+                        </Pressable>
+
+                        <Text style={styles.cadastrar}>
+                            Ja possui uma conta?{" "}
+                            <Text style={styles.link} onPress={() => router.push("/login")}>
+                                Faça login
+                            </Text>
+                        </Text>
+
+                    </View>
+
+                </ScrollView>
+
+            </KeyboardAvoidingView>
+
         </Background>
     )
-}const styles = StyleSheet.create({
+}
+
+const styles = StyleSheet.create({
 
     container: {
-        flex: 1,
+        flexGrow: 1,
         paddingTop: 50,
     },
 
     top: {
-        flex: 1,
         alignItems: "center",
+        marginBottom: 30,
     },
 
     forms: {
-        flex: 2,
+        flex: 1,
         justifyContent: "center",
-        backgroundColor: "#fff",
-        borderTopRightRadius: 150,
-        padding: 20,
+        backgroundColor: colors.preto,
+        borderTopLeftRadius: 100,
+        paddingHorizontal: 20,
+        paddingVertical: 50,
         gap: 20,
     },
 
@@ -60,8 +103,8 @@ export default function Index() {
     },
 
     inputText: {
-        color: colors.preto,
-        fontSize: 30,
+        color: colors.creme,
+        fontSize: 20,
         fontFamily: "KohoRegular",
     },
 
@@ -76,11 +119,10 @@ export default function Index() {
     },
 
     button: {
-        backgroundColor: colors.marrom,
+        backgroundColor: colors.marromClaro,
         paddingVertical: 15,
         borderRadius: 20,
         alignItems: "center",
-        marginTop: 50,
     },
 
     buttonText: {
@@ -90,6 +132,7 @@ export default function Index() {
     },
 
     cadastrar: {
+        color: colors.creme,
         fontSize: 20,
         textAlign: "center",
         fontFamily: "KohoRegular",

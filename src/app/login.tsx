@@ -23,7 +23,7 @@ export default function Index() {
 
                     <Text style={styles.redefinir}>Esqueceu sua senha? <Text style={styles.link}>Redefina aqui</Text></Text>
 
-                    <Pressable style={styles.button}>
+                    <Pressable style={styles.button} onPress={() => router.push("/home")}>
                         <Text style={styles.buttonText}>ENTRAR</Text>
                     </Pressable>
 
@@ -49,7 +49,7 @@ export default function Index() {
         flex: 2,
         justifyContent: "center",
         backgroundColor: "#fff",
-        borderTopRightRadius: 150,
+        borderTopRightRadius: 100,
         padding: 20,
         gap: 20,
     },
@@ -61,7 +61,7 @@ export default function Index() {
 
     inputText: {
         color: colors.preto,
-        fontSize: 30,
+        fontSize: 20,
         fontFamily: "KohoRegular",
     },
 
@@ -76,7 +76,7 @@ export default function Index() {
     },
 
     button: {
-        backgroundColor: colors.marrom,
+        backgroundColor: colors.marromClaro,
         paddingVertical: 15,
         borderRadius: 20,
         alignItems: "center",
