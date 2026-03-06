@@ -2,13 +2,13 @@ import Background from "@/components/backgroundImage";
 import { View, Text, StyleSheet, Pressable, } from "react-native";
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
-import { useRouter } from "expo-router";
+import {  useRouter } from "expo-router";
+
 
 export default function Index() {
-        const router = useRouter();
-    
+    const router = useRouter();
     return (
-        <Background source={require("@/assets/img/ARTBACKGROUNDWHITE.png")}>
+        <Background source={require("@/assets/img/ARTBACKGROUNDBLACK.png")}>
             <View style={styles.container}>
 
                 <View style={styles.top}>
@@ -27,7 +27,7 @@ export default function Index() {
                         <Text style={styles.buttonText}>ENTRAR</Text>
                     </Pressable>
 
-                    <Text style={styles.cadastrar}>Não tem uma conta? <Text style={styles.link} onPress={() => router.push("/cadastro")}>Cadastre-se</Text></Text>
+                    <Text style={styles.cadastrar}>Não tem uma conta? <Text style={styles.link} >Cadastre-se</Text></Text>
                 </View>
 
             </View>
