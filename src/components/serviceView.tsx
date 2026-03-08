@@ -7,9 +7,10 @@ type Props = {
     profissao: string
     descricao: string
     imageFreelancer: any
+    avaliacao: number
 }
 
-export function ServiceView({ nome, profissao, descricao, imageFreelancer }: Props) {
+export function ServiceView({ nome, profissao, descricao, imageFreelancer, avaliacao }: Props) {
     return (
         <View style={styles.container}>
 
@@ -22,7 +23,7 @@ export function ServiceView({ nome, profissao, descricao, imageFreelancer }: Pro
 
                 <View style={styles.avaliacao}>
                     <Ionicons name="star-outline" size={16} color="white" />
-                    <Text style={styles.textAvaliacao}>4.5</Text>
+                    <Text style={styles.textAvaliacao}>{avaliacao}</Text>
                 </View>
 
                 <View style={styles.favorito}>
@@ -34,10 +35,10 @@ export function ServiceView({ nome, profissao, descricao, imageFreelancer }: Pro
             <View style={styles.containerTexto}>
                 <Text style={styles.nome}>{nome}</Text>
                 <Text style={styles.profissao}>{profissao}</Text>
-                <Text style={styles.descricao}>{descricao}</Text>
+                <Text style={styles.descricao} numberOfLines={5} ellipsizeMode="tail">{descricao}</Text>
 
                 <Pressable style={styles.botao}>
-                    <Text style={styles.botaoText}>Ver mais</Text>
+                    <Text style={styles.botaoText}>Ver Mais</Text>
                 </Pressable>
             </View>
 
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         width: "100%",
-        height: 150,
+        height: 160,
     },
 
     containerImagem: {
@@ -83,8 +84,8 @@ const styles = StyleSheet.create({
     },
 
     textAvaliacao: {
-        color: "white",
-        fontSize: 12,
+        color: colors.creme,
+        fontSize: 15,
         marginLeft: 3
     },
 
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
 
     botao: {
         width: "50%",
-        backgroundColor: colors.marromClaro,
+        backgroundColor: colors.marrom,
         paddingVertical: 5,
         borderRadius: 20,
         alignItems: "center",

@@ -8,6 +8,7 @@ import {
     View
 } from "react-native";
 
+import { Footer } from "@/components/footer";
 import Screen from "@/components/screen";
 import colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
@@ -19,45 +20,90 @@ export default function Index() {
     const router = useRouter();
 
     return (
-        <Screen style={styles.body}>
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <View style={{ flex: 1 }}>
 
-                <ScrollView
-                    contentContainerStyle={styles.containerScroll}
-                    showsVerticalScrollIndicator={false}>
+            <Screen style={styles.body}>
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}>
 
-                    <View>
-                        <Text style={styles.nameApp}>FRILA</Text>
-                    </View>
+                    <ScrollView
+                        contentContainerStyle={styles.containerScroll}
+                        showsVerticalScrollIndicator={false}
+                        stickyHeaderIndices={[1]}
+                    >
 
-                    <View style={styles.inputContainer}>
-                        <SearchInput placeholder="Buscar serviços..." />
-                    </View>
+                        <View>
+                            <Text style={styles.nameApp}>FRILA</Text>
+                        </View>
 
-                    <View style={styles.containerFilters}>
-                        <Text style={styles.textFilter}>Conheça os serviços</Text>
-                        <Ionicons name="filter" size={20} color={colors.cinza} />
-                    </View>
+                        <View style={styles.inputContainer}>
+                            <SearchInput placeholder="Buscar serviços..." />
+                        </View>
 
-                    <View style={styles.containerServicos}>
+                        <View style={styles.containerFilters}>
+                            <Text style={styles.textFilter}>Conheça os serviços</Text>
+                            <Ionicons name="filter" size={20} color={colors.cinza} />
+                        </View>
 
-                        <ServiceView
-                            imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
-                            nome="Geovana Oliveira"
-                            profissao="Designer"
-                            descricao ="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                        />
+                        <View style={styles.containerServicos}>
 
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
+                                nome="Geovana Oliveira"
+                                profissao="Designer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={5}
+                            />
 
-                    </View>
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
+                                nome="Jorge Silva"
+                                profissao="software developer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={4.2}
+                            />
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
+                                nome="Geovana Oliveira"
+                                profissao="Designer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={5}
+                            />
 
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
+                                nome="Jorge Silva"
+                                profissao="software developer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={4.2}
+                            />
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
+                                nome="Geovana Oliveira"
+                                profissao="Designer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={5}
+                            />
 
-                </ScrollView>
+                            <ServiceView
+                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
+                                nome="Jorge Silva"
+                                profissao="software developer"
+                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                                avaliacao={4.2}
+                            />
 
-            </KeyboardAvoidingView>
-        </Screen>
+                        </View>
+
+                    </ScrollView>
+
+                </KeyboardAvoidingView>
+            </Screen>
+
+            <Footer />
+
+        </View>
     )
 }
 
@@ -69,6 +115,7 @@ const styles = StyleSheet.create({
 
     containerScroll: {
         flexGrow: 1,
+        paddingBottom: 120
     },
 
     nameApp: {
@@ -79,6 +126,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         alignItems: "center",
         width: "100%",
+        backgroundColor: "transparent"
     },
 
     containerFilters: {
@@ -96,9 +144,8 @@ const styles = StyleSheet.create({
     containerServicos: {
         width: "100%",
         height: "100%",
+        marginTop: 10,
+        gap: 20
     }
-
-
-
 
 });
