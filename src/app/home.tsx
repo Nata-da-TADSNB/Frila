@@ -12,6 +12,7 @@ import Screen from "@/components/screen";
 import colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
+import { ServiceView } from "@/components/serviceView";
 
 export default function Index() {
 
@@ -38,6 +39,18 @@ export default function Index() {
                     <View style={styles.containerFilters}>
                         <Text style={styles.textFilter}>Conheça os serviços</Text>
                         <Ionicons name="filter" size={20} color={colors.cinza} />
+                    </View>
+
+                    <View style={styles.containerServicos}>
+
+                        <ServiceView
+                            imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
+                            nome="Geovana Oliveira"
+                            profissao="Designer"
+                            descricao ="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
+                        />
+
+
                     </View>
 
 
@@ -78,9 +91,14 @@ const styles = StyleSheet.create({
         fontFamily: "KohoLight",
         fontSize: 18,
         color: colors.cinza,
+    },
+
+    containerServicos: {
+        width: "100%",
+        height: "100%",
     }
 
 
 
 
-    });
+});
