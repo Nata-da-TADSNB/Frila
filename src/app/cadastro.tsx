@@ -1,12 +1,12 @@
 import Background from "@/components/backgroundImage";
 import {
-    View,
-    Text,
-    StyleSheet,
+    KeyboardAvoidingView,
+    Platform,
     Pressable,
     ScrollView,
-    KeyboardAvoidingView,
-    Platform
+    StyleSheet,
+    Text,
+    View
 } from "react-native";
 
 import { Input } from "@/components/input";

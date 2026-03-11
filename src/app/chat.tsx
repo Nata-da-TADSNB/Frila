@@ -3,9 +3,9 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    Alert,
     FlatList,
     Image,
+    Modal,
     SafeAreaView,
     StyleSheet,
     Text,
@@ -27,6 +27,8 @@ export default function ChatScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<ChatType>('usuario');
     const [searchText, setSearchText] = useState('');
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [selectedChat, setSelectedChat] = useState<ChatContact | null>(null);
 
     const userChats: ChatContact[] = [
         { id: '1', name: 'Andrey Silva', photo: '', unreadCount: 3 },
@@ -61,22 +63,22 @@ export default function ChatScreen() {
         0
     );
 
-    const handleDeleteChat = (chatId: string, chatName: string) => {
-        Alert.alert(
-            'Apagar conversa',
-            `Tem certeza que deseja apagar a conversa com ${chatName}?`,
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Apagar',
-                    style: 'destructive',
-                    onPress: () => {
-                        console.log('Apagar chat:', chatId);
-                        Alert.alert('Sucesso', 'Conversa apagada com sucesso!');
-                    }
-                }
-            ]
-        );
+    const handleDeletePress = (chat: ChatContact) => {
+        setSelectedChat(chat);
+        setDeleteModalVisible(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (selectedChat) {
+            console.log('Apagar chat:', selectedChat.id);
+            setDeleteModalVisible(false);
+            setSelectedChat(null);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setDeleteModalVisible(false);
+        setSelectedChat(null);
     };
 
     const handleOpenChat = (chat: ChatContact) => {
@@ -114,7 +116,7 @@ export default function ChatScreen() {
             </View>
 
             <TouchableOpacity
-                onPress={() => handleDeleteChat(item.id, item.name)}
+                onPress={() => handleDeletePress(item)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
                 <Feather name="trash-2" size={20} color={Colors.marrom} />
@@ -189,6 +191,47 @@ export default function ChatScreen() {
                 contentContainerStyle={styles.chatList}
                 ListEmptyComponent={renderEmptyComponent}
             />
+
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={deleteModalVisible}
+                onRequestClose={handleCancelDelete}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalIconContainer}>
+                            <Feather name="trash-2" size={40} color={Colors.marrom} />
+                        </View>
+
+                        <Text style={styles.modalTitle}>Apagar conversa</Text>
+
+                        <Text style={styles.modalMessage}>
+                            Tem certeza que deseja apagar a conversa com {selectedChat?.name}?
+                        </Text>
+
+                        <Text style={styles.modalWarning}>
+                            Esta ação não poderá ser desfeita.
+                        </Text>
+
+                        <View style={styles.modalButtonsContainer}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={handleCancelDelete}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.deleteButton]}
+                                onPress={handleConfirmDelete}
+                            >
+                                <Text style={styles.deleteButtonText}>Apagar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -337,5 +380,82 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: Colors.cinza,
         textAlign: 'center',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '85%',
+        backgroundColor: Colors.creme,
+        borderRadius: 20,
+        padding: 24,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalIconContainer: {
+        width: 70,
+        height: 70,
+        borderRadius: 35,
+        backgroundColor: Colors.bege,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: Colors.marrom,
+        marginBottom: 8,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: Colors.preto,
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    modalWarning: {
+        fontSize: 14,
+        color: Colors.cinza,
+        textAlign: 'center',
+        marginBottom: 24,
+        fontStyle: 'italic',
+    },
+    modalButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        gap: 12,
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 25,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: Colors.bege,
+    },
+    cancelButtonText: {
+        color: Colors.marrom,
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    deleteButton: {
+        backgroundColor: Colors.marrom,
+    },
+    deleteButtonText: {
+        color: Colors.creme,
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
