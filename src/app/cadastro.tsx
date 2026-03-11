@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         borderRadius: 20,
         alignItems: "center",
+        marginTop: 20,
     },
 
     buttonText: {

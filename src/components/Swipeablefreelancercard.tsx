@@ -200,16 +200,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.preto,
     borderRadius: 24,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
 
   imageContainer: {
     width: "100%",
-    height: 200,
+    height: 250,
   },
   image: {
     width: "100%",

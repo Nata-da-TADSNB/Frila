@@ -24,7 +24,7 @@ export function Footer() {
 
                 <Pressable>
                     <Ionicons name="chatbubble-outline" size={24} color={colors.marromClaro}
-                        onPress={() => router.push("/search")}
+                        onPress={() => router.push("/chat")}
                     />
                 </Pressable>
 
@@ -43,7 +43,7 @@ export function Footer() {
                     />
                 </Pressable>
 
-            </View>[]
+            </View>
 
         </View>
     );

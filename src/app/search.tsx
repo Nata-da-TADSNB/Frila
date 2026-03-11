@@ -10,11 +10,10 @@ import {
 
 import { Footer } from "@/components/footer";
 import Screen from "@/components/screen";
-import colors from "@/constants/Colors";
-import { useRouter } from "expo-router";
-import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { ServiceView } from "@/components/serviceView";
 import { SwipeableFreelancerCard } from "@/components/Swipeablefreelancercard";
+import colors from "@/constants/Colors";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
+import { useRouter } from "expo-router";
 
 export default function Index() {
 
@@ -53,7 +52,7 @@ export default function Index() {
                                         imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
                                         nome: "Michel Oliveira",
                                         profissao: "UI/UX Designer",
-                                        descricao: "Ipsum fugiat elit dolore culpa duis...",
+                                        descricao: "Bla bla bla bla bla",
                                         avaliacao: 4.5,
                                         preco: 85,
                                     },
@@ -62,16 +61,16 @@ export default function Index() {
                                         imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
                                         nome: "Ana Carolina",
                                         profissao: "Mobile Developer",
-                                        descricao: "Outro freelancer aqui...",
+                                        descricao: "Bla bla bla bla bla",
                                         avaliacao: 4.8,
                                         preco: 110,
                                     },
                                     {
                                         id: "3",
-                                        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-                                        nome: "Ana Carolina",
-                                        profissao: "Mobile Developer",
-                                        descricao: "Outro freelancer aqui...",
+                                        imageFreelancer: require("@/assets/img/FOTOFREELANCER2.jpg"),
+                                        nome: "Maria Ribeiro",
+                                        profissao: "Designer",
+                                        descricao: "Bla bla bla bla bla",
                                         avaliacao: 4.8,
                                         preco: 110,
                                     },
