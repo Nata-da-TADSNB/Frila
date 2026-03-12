@@ -14,8 +14,8 @@ export default function Index() {
         { icon: 'message-circle', text: 'Chat', route: '/chat' },
         { icon: 'plus', text: 'Freelancer', route: '/dashboard' },
         { icon: 'heart', text: 'Gostei', route: '/gostei' },
-        { icon: 'help-circle', text: 'Duvídas', route: '/duvidas' },
-        { icon: 'settings', text: 'Configuracoes', route: '/editarPerfil' },
+        { icon: 'help-circle', text: 'Suporte', route: '/suporte' },
+        { icon: 'settings', text: 'Configurações', route: '/editarPerfil' },
         { icon: 'log-out', text: 'Sair', route: '/login' },
     ];
 
@@ -38,7 +38,7 @@ export default function Index() {
 
                 <View style={styles.profileImageContainer}>
                     <Image
-                        source={require('@/assets/img/FOTOFREELANCER.png')}
+                        source={require('@/assets/img/FOTOFREELANCER1.png')}
                         style={styles.profileImage}
                     />
                 </View>

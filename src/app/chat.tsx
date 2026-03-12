@@ -1,3 +1,4 @@
+import { Footer } from "@/components/footer";
 import Colors from '@/constants/Colors';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,7 +20,7 @@ type ChatType = 'usuario' | 'freelancer';
 interface ChatContact {
     id: string;
     name: string;
-    photo: string;
+    photo: any; 
     unreadCount: number;
 }
 
@@ -31,18 +32,17 @@ export default function ChatScreen() {
     const [selectedChat, setSelectedChat] = useState<ChatContact | null>(null);
 
     const userChats: ChatContact[] = [
-        { id: '1', name: 'Andrey Silva', photo: '', unreadCount: 3 },
-        { id: '2', name: 'Maria Santos', photo: '', unreadCount: 1 },
-        { id: '3', name: 'João Pedro', photo: '', unreadCount: 0 },
-        { id: '4', name: 'Suporte', photo: '', unreadCount: 2 },
+        { id: '1', name: 'Andrey Silva', photo: require('@/assets/img/FOTOFREELANCER1.png'), unreadCount: 3 },
+        { id: '2', name: 'Maria Santos', photo: require('@/assets/img/MULHER1.jpg'), unreadCount: 1 },
+        { id: '3', name: 'João Pedro', photo: require('@/assets/img/HOMEM2.jpg'), unreadCount: 0 },
+        { id: '4', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 2 },
     ];
 
     const freelancerChats: ChatContact[] = [
-        { id: '5', name: 'Carlos Eduardo', photo: '', unreadCount: 5 },
-        { id: '6', name: 'Ana Beatriz', photo: '', unreadCount: 2 },
-        { id: '7', name: 'Lucas Mendes', photo: '', unreadCount: 0 },
-        { id: '8', name: 'Suporte', photo: '', unreadCount: 1 },
-        { id: '9', name: 'Patrícia Lima', photo: '', unreadCount: 4 },
+        { id: '5', name: 'Carlos Eduardo', photo: require('@/assets/img/HOMEM3.jpg'), unreadCount: 5 },
+        { id: '6', name: 'Ana Beatriz', photo: require('@/assets/img/MULHER2.jpg'), unreadCount: 2 },
+        { id: '7', name: 'Lucas Mendes', photo: require('@/assets/img/HOMEM4.jpg'), unreadCount: 0 },
+        { id: '8', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 1 },
     ];
 
     const getCurrentChats = () => {
@@ -100,7 +100,7 @@ export default function ChatScreen() {
             <View style={styles.chatItemLeft}>
                 <View style={styles.avatarContainer}>
                     <Image
-                        source={{ uri: item.photo }}
+                        source={item.photo}
                         style={styles.avatar}
                     />
                     {item.unreadCount > 0 && (
@@ -232,6 +232,7 @@ export default function ChatScreen() {
                     </View>
                 </View>
             </Modal>
+            <Footer />
         </SafeAreaView>
     );
 }

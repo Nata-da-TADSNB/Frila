@@ -1,7 +1,7 @@
-import { View, StyleSheet, Pressable } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, View } from "react-native";
 
 export function Footer() {
 
@@ -11,7 +11,9 @@ export function Footer() {
         <View style={styles.wrapper}>
 
             <Pressable style={styles.favoriteButton}>
-                <Ionicons name="heart-outline" size={28} color="white" />
+                <Ionicons name="heart-outline" size={28} color="white" 
+                    onPress={() => router.push("/gostei")}
+                />
             </Pressable>
 
             <View style={styles.container}>
@@ -28,18 +30,17 @@ export function Footer() {
                     />
                 </Pressable>
 
-                {/* espaço para botão central */}
                 <View style={{ width: 40 }} />
 
                 <Pressable>
                     <Ionicons name="document-text-outline" size={24} color={colors.marromClaro}
-                        onPress={() => router.push("/search")}
+                        onPress={() => router.push("/pedidos")}
                     />
                 </Pressable>
 
                 <Pressable>
                     <Ionicons name="person-outline" size={24} color={colors.marromClaro}
-                        onPress={() => router.push("/login")}
+                        onPress={() => router.push("/perfil")}
                     />
                 </Pressable>
 

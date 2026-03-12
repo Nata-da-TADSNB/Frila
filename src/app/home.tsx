@@ -1,4 +1,10 @@
+import { Footer } from "@/components/footer";
+import Screen from "@/components/screen";
 import { SearchInput } from "@/components/SearchInput";
+import { ServiceView } from "@/components/serviceView";
+import colors from "@/constants/Colors";
+import Ionicons from "@expo/vector-icons/build/Ionicons";
+import { useRouter } from "expo-router";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -7,13 +13,6 @@ import {
     Text,
     View
 } from "react-native";
-
-import { Footer } from "@/components/footer";
-import Screen from "@/components/screen";
-import colors from "@/constants/Colors";
-import { useRouter } from "expo-router";
-import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { ServiceView } from "@/components/serviceView";
 
 export default function Index() {
 

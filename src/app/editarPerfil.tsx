@@ -61,7 +61,7 @@ export default function Index() {
                 <View style={styles.profileImageContainer}>
                     <View style={styles.profileImageWrapper}>
                         <Image
-                            source={require('@/assets/img/FOTOFREELANCER.png')}
+                            source={require('@/assets/img/FOTOFREELANCER1.png')}
                             style={styles.profileImage}
                         />
 

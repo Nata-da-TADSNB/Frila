@@ -1,3 +1,4 @@
+import { Footer } from "@/components/footerFreelancer";
 import colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -35,6 +36,7 @@ type CardServicoProps = {
     nome: string;
     status: string;
     mensagemCancelamento?: string;
+    motivoReembolso?: string;
     foto: any;
     onConfirmarPress: () => void;
     onCancelarPress: () => void;
@@ -52,7 +54,7 @@ function EstrelasAvaliacao({ avaliacao, setAvaliacao }: EstrelasAvaliacaoProps) 
                     activeOpacity={0.7}
                 >
                     <Feather
-                        name={"star"}
+                        name="star"
                         size={40}
                         color={estrela <= avaliacao ? colors.dourado : colors.cinza}
                     />
@@ -213,6 +215,7 @@ function CardServico({
     nome,
     status,
     mensagemCancelamento,
+    motivoReembolso,
     foto,
     onConfirmarPress,
     onCancelarPress
@@ -221,6 +224,22 @@ function CardServico({
     const isConcluido = status === "Concluído";
     const isCancelado = status === "Cancelado";
     const isEmAndamento = status === "Em Andamento";
+    const isReembolso = status === "Reembolso";
+
+    const getStatusColor = () => {
+        if (status === "Concluído") return '#4CAF50';
+        if (status === "Cancelado") return '#F44336';
+        if (status === "Em Andamento") return '#FFC107';
+        if (status === "Reembolso") return '#FF9800';
+        return colors.cinza;
+    };
+
+    const getStatusText = () => {
+        if (status === "Reembolso") return "Em Reembolso";
+        return status;
+    };
+
+    const allButtonsDisabled = isConcluido || isCancelado || isReembolso;
 
     return (
         <View style={styles.card}>
@@ -238,33 +257,34 @@ function CardServico({
                         <Text style={styles.resultLabel}>Resultado</Text>
                     </View>
 
-                    <Text
-                        style={[
-                            styles.resultStatus,
-                            status === "Concluído" && { color: '#4CAF50' },
-                            status === "Cancelado" && { color: '#F44336' },
-                            status === "Em Andamento" && { color: '#FFC107' },
-                        ]}
-                    >
-                        {status}
+                    <Text style={[styles.resultStatus, { color: getStatusColor() }]}>
+                        {getStatusText()}
                     </Text>
+
+                    {isEmAndamento && mensagemCancelamento && (
+                        <Text style={styles.tempoRestante}>{mensagemCancelamento}</Text>
+                    )}
+
+                    {isReembolso && motivoReembolso && (
+                        <Text style={styles.motivoReembolso}>{motivoReembolso}</Text>
+                    )}
 
                     <TouchableOpacity
                         style={[
                             styles.messageButton,
-                            isCancelado && styles.messageButtonDisabled
+                            allButtonsDisabled && styles.messageButtonDisabled
                         ]}
-                        disabled={isCancelado}
+                        disabled={allButtonsDisabled}
                     >
                         <Feather
                             name="mail"
                             size={20}
-                            color={isCancelado ? colors.cinza : colors.marrom}
+                            color={allButtonsDisabled ? colors.cinza : colors.marrom}
                         />
                         <Text
                             style={[
                                 styles.messageButtonText,
-                                isCancelado && styles.messageButtonTextDisabled
+                                allButtonsDisabled && styles.messageButtonTextDisabled
                             ]}
                         >
                             Mensagem
@@ -273,44 +293,37 @@ function CardServico({
                 </View>
 
                 <View style={styles.rightSection}>
-                    <TouchableOpacity
-                        style={[
-                            styles.confirmButton,
-                            (isConcluido || isCancelado) && styles.disabledButton
-                        ]}
-                        disabled={isConcluido || isCancelado}
-                        onPress={onConfirmarPress}
-                    >
-                        <Text
-                            style={[
-                                styles.confirmButtonText,
-                                (isConcluido || isCancelado) && styles.disabledButtonText
-                            ]}
-                        >
-                            Confirmar
-                        </Text>
-                    </TouchableOpacity>
+                    {isConcluido ? (
+                        <View style={styles.statusContainer}>
+                            <Feather name="check-circle" size={24} color="#4CAF50" />
+                            <Text style={[styles.statusText, { color: '#4CAF50' }]}>Concluído</Text>
+                        </View>
+                    ) : isCancelado ? (
+                        <View style={styles.statusContainer}>
+                            <Feather name="x-circle" size={24} color="#F44336" />
+                            <Text style={[styles.statusText, { color: '#F44336' }]}>Cancelado</Text>
+                        </View>
+                    ) : isReembolso ? (
+                        <View style={styles.statusContainer}>
+                            <Feather name="clock" size={24} color="#FF9800" />
+                            <Text style={[styles.statusText, { color: '#FF9800' }]}>Reembolso</Text>
+                        </View>
+                    ) : (
+                        <>
+                            <TouchableOpacity
+                                style={styles.confirmButton}
+                                onPress={onConfirmarPress}
+                            >
+                                <Text style={styles.confirmButtonText}>Confirmar</Text>
+                            </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[
-                            styles.cancelButton,
-                            (isConcluido || isCancelado) && styles.disabledButton
-                        ]}
-                        disabled={isConcluido || isCancelado}
-                        onPress={onCancelarPress}
-                    >
-                        <Text
-                            style={[
-                                styles.cancelButtonText,
-                                (isConcluido || isCancelado) && styles.disabledButtonText
-                            ]}
-                        >
-                            Cancelar
-                        </Text>
-                    </TouchableOpacity>
-
-                    {isEmAndamento && mensagemCancelamento && (
-                        <Text style={styles.cancelMessage}>{mensagemCancelamento}</Text>
+                            <TouchableOpacity
+                                style={styles.cancelButton}
+                                onPress={onCancelarPress}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancelar</Text>
+                            </TouchableOpacity>
+                        </>
                     )}
                 </View>
             </View>
@@ -319,7 +332,6 @@ function CardServico({
 }
 
 export default function Index() {
-
     const [popupConfirmarVisible, setPopupConfirmarVisible] = useState<boolean>(false);
     const [popupAvaliacaoVisible, setPopupAvaliacaoVisible] = useState<boolean>(false);
     const [popupCancelarVisible, setPopupCancelarVisible] = useState<boolean>(false);
@@ -338,7 +350,6 @@ export default function Index() {
 
     const handleConfirmarPedido = () => {
         setPopupConfirmarVisible(false);
-
         setTimeout(() => {
             setPopupAvaliacaoVisible(true);
         }, 300);
@@ -357,81 +368,94 @@ export default function Index() {
     };
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-        >
+        <View style={{ flex: 1, backgroundColor: colors.creme }}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={[styles.content, { paddingBottom: 100 }]}
+                showsVerticalScrollIndicator={false}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.nameApp}>FRILA</Text>
+                    <Text style={styles.subtitle}>Dashboard</Text>
+                </View>
 
-            <View style={styles.header}>
-                <Text style={styles.nameApp}>FRILA</Text>
-                <Text style={styles.subtitle}>Dashboard</Text>
-            </View>
+                <CardServico
+                    nome="João Silva"
+                    status="Em Andamento"
+                    mensagemCancelamento="1 hora pra cancelar"
+                    foto={require('@/assets/img/HOMEM5.jpg')}
+                    onConfirmarPress={() => handleConfirmarPress({ nome: "João Silva" })}
+                    onCancelarPress={() => handleCancelarPress({ nome: "João Silva" })}
+                />
 
-            <CardServico
-                nome="João Silva"
-                status="Em Andamento"
-                mensagemCancelamento="1 hora pra cancelar"
-                foto={require('@/assets/img/FOTOFREELANCER.png')}
-                onConfirmarPress={() => handleConfirmarPress({ nome: "João Silva" })}
-                onCancelarPress={() => handleCancelarPress({ nome: "João Silva" })}
-            />
+                <CardServico
+                    nome="Maria Santos"
+                    status="Concluído"
+                    foto={require('@/assets/img/MULHER2.jpg')}
+                    onConfirmarPress={() => handleConfirmarPress({ nome: "Maria Santos" })}
+                    onCancelarPress={() => handleCancelarPress({ nome: "Maria Santos" })}
+                />
 
-            <CardServico
-                nome="Maria Santos"
-                status="Concluído"
-                foto={require('@/assets/img/FOTOFREELANCER.png')}
-                onConfirmarPress={() => handleConfirmarPress({ nome: "Maria Santos" })}
-                onCancelarPress={() => handleCancelarPress({ nome: "Maria Santos" })}
-            />
+                <CardServico
+                    nome="Pedro Oliveira"
+                    status="Cancelado"
+                    mensagemCancelamento="1 hora pra cancelar"
+                    foto={require('@/assets/img/HOMEM3.jpg')}
+                    onConfirmarPress={() => handleConfirmarPress({ nome: "Pedro Oliveira" })}
+                    onCancelarPress={() => handleCancelarPress({ nome: "Pedro Oliveira" })}
+                />
 
-            <CardServico
-                nome="Pedro Oliveira"
-                status="Cancelado"
-                mensagemCancelamento="1 hora pra cancelar"
-                foto={require('@/assets/img/FOTOFREELANCER.png')}
-                onConfirmarPress={() => handleConfirmarPress({ nome: "Pedro Oliveira" })}
-                onCancelarPress={() => handleCancelarPress({ nome: "Pedro Oliveira" })}
-            />
+                <CardServico
+                    nome="Ana Souza"
+                    status="Reembolso"
+                    motivoReembolso="Aguardando análise do comprador"
+                    foto={require('@/assets/img/MULHER1.jpg')}
+                    onConfirmarPress={() => handleConfirmarPress({ nome: "Ana Souza" })}
+                    onCancelarPress={() => handleCancelarPress({ nome: "Ana Souza" })}
+                />
 
-            <PopupConfirmarPedido
-                visible={popupConfirmarVisible}
-                onClose={() => {
-                    setPopupConfirmarVisible(false);
-                    setServicoSelecionado(null);
-                }}
-                onConfirm={handleConfirmarPedido}
-                nomeServico={servicoSelecionado?.nome}
-            />
+                <PopupConfirmarPedido
+                    visible={popupConfirmarVisible}
+                    onClose={() => {
+                        setPopupConfirmarVisible(false);
+                        setServicoSelecionado(null);
+                    }}
+                    onConfirm={handleConfirmarPedido}
+                    nomeServico={servicoSelecionado?.nome}
+                />
 
-            <PopupAvaliacao
-                visible={popupAvaliacaoVisible}
-                onClose={() => {
-                    setPopupAvaliacaoVisible(false);
-                    setServicoSelecionado(null);
-                }}
-                onAvaliar={handleAvaliar}
-                nomeComprador={servicoSelecionado?.nome}
-            />
+                <PopupAvaliacao
+                    visible={popupAvaliacaoVisible}
+                    onClose={() => {
+                        setPopupAvaliacaoVisible(false);
+                        setServicoSelecionado(null);
+                    }}
+                    onAvaliar={handleAvaliar}
+                    nomeComprador={servicoSelecionado?.nome}
+                />
 
-            <PopupCancelarPedido
-                visible={popupCancelarVisible}
-                onClose={() => {
-                    setPopupCancelarVisible(false);
-                    setServicoSelecionado(null);
-                }}
-                onConfirm={handleCancelarPedido}
-                nomeServico={servicoSelecionado?.nome}
-            />
+                <PopupCancelarPedido
+                    visible={popupCancelarVisible}
+                    onClose={() => {
+                        setPopupCancelarVisible(false);
+                        setServicoSelecionado(null);
+                    }}
+                    onConfirm={handleCancelarPedido}
+                    nomeServico={servicoSelecionado?.nome}
+                />
+            </ScrollView>
 
-        </ScrollView>
+            <Footer />
+        </View>
     );
 }
 
 // -------------------- STYLES -------------------- //
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.creme },
+    container: {
+        flex: 1
+    },
 
     header: {
         paddingTop: 40,
@@ -454,7 +478,6 @@ const styles = StyleSheet.create({
     content: {
         paddingHorizontal: 20,
         gap: 20,
-        paddingBottom: 40
     },
 
     card: {
@@ -526,7 +549,20 @@ const styles = StyleSheet.create({
     resultStatus: {
         fontSize: 16,
         fontWeight: '700',
+        marginBottom: 5
+    },
+
+    tempoRestante: {
+        fontSize: 14,
+        color: colors.marrom,
         marginBottom: 15
+    },
+
+    motivoReembolso: {
+        fontSize: 14,
+        color: '#8b6b4f',
+        marginBottom: 15,
+        fontStyle: 'italic'
     },
 
     messageButton: {
@@ -557,7 +593,7 @@ const styles = StyleSheet.create({
 
     rightSection: {
         flex: 1,
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'stretch',
         paddingVertical: 35,
         gap: 12
@@ -595,18 +631,16 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
 
-    disabledButton: {
-        backgroundColor: '#E0E0E0',
-        borderColor: colors.cinza,
-        borderWidth: 2
+    statusContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        height: '100%'
     },
 
-    disabledButtonText: { color: colors.cinza },
-
-    cancelMessage: {
+    statusText: {
         fontSize: 14,
-        color: colors.cinza,
-        marginTop: -2,
+        fontWeight: '600',
         textAlign: 'center'
     },
 
