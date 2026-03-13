@@ -139,7 +139,7 @@ function PopupAvaliacao({ visible, onClose, onAvaliar }: PopupAvaliacaoProps) {
                         <Feather name="star" size={50} color={colors.marrom} />
                     </View>
 
-                    <Text style={styles.popupTitle}>FAÇA SUA AVALIAÇÃO DO COMPRADOR</Text>
+                    <Text style={styles.popupTitle}>FAÇA SUA AVALIAÇÃO DO SERVIÇO</Text>
 
                     <EstrelasAvaliacao avaliacao={avaliacao} setAvaliacao={setAvaliacao} />
 
