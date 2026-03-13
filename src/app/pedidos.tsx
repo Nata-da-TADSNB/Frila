@@ -1,4 +1,4 @@
-import { Footer } from "@/components/footerFreelancer";
+import { Footer } from "@/components/footer";
 import colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
