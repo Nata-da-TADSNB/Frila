@@ -1,6 +1,8 @@
 import { Text, View, StyleSheet, Pressable, Image } from "react-native";
 import colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+
 
 type Props = {
     nome: string
@@ -37,7 +39,7 @@ export function ServiceView({ nome, profissao, descricao, imageFreelancer, avali
                 <Text style={styles.profissao}>{profissao}</Text>
                 <Text style={styles.descricao} numberOfLines={5} ellipsizeMode="tail">{descricao}</Text>
 
-                <Pressable style={styles.botao}>
+                <Pressable onPress={() => router.push("/detalhe")} style={styles.botao}>
                     <Text style={styles.botaoText}>Ver Mais</Text>
                 </Pressable>
             </View>
