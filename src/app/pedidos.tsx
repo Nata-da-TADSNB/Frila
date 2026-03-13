@@ -1,6 +1,7 @@
 import { Footer } from "@/components/footerFreelancer";
 import colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -32,6 +33,14 @@ type PopupCancelarPedidoProps = {
     nomeServico?: string;
 };
 
+type PopupReembolsoProps = {
+    visible: boolean;
+    onClose: () => void;
+    onCancel: () => void;
+    onSuporte: () => void;
+    nomeServico?: string;
+};
+
 type CardServicoProps = {
     nome: string;
     status: string;
@@ -40,6 +49,8 @@ type CardServicoProps = {
     foto: any;
     onConfirmarPress: () => void;
     onCancelarPress: () => void;
+    onReembolsoPress?: () => void;
+    mostrarReembolso?: boolean;
 };
 
 // -------------------- COMPONENTS -------------------- //
@@ -211,6 +222,55 @@ function PopupCancelarPedido({ visible, onClose, onConfirm }: PopupCancelarPedid
     );
 }
 
+function PopupReembolso({ visible, onClose, onCancel, onSuporte }: PopupReembolsoProps) {
+    return (
+        <Modal
+            animationType="fade"
+            transparent={true}
+            visible={visible}
+            onRequestClose={onClose}
+        >
+            <View style={styles.popupOverlay}>
+                <View style={styles.popupContainer}>
+                    <View style={styles.popupIconContainer}>
+                        <Feather name="alert-circle" size={50} color={colors.marrom} />
+                    </View>
+
+                    <Text style={[styles.popupReembolsoTitle, { color: colors.marrom }]}>REEMBOLSO</Text>
+
+                    <Text style={[styles.popupReembolsoSubtitle, { color: colors.marrom }]}>PROBLEMA COM PEDIDO?</Text>
+
+                    <Text style={styles.popupReembolsoMessage}>
+                        Solicito, por gentileza, que entre em contato com o suporte e informe detalhadamente o ocorrido.
+                    </Text>
+
+                    <View style={styles.popupButtonsContainer}>
+                        <TouchableOpacity
+                            style={[styles.popupButton, styles.popupReembolsoCancelButton]}
+                            onPress={() => {
+                                onCancel();
+                                onClose();
+                            }}
+                        >
+                            <Text style={styles.popupReembolsoCancelButtonText}>Cancelar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.popupButton, styles.popupReembolsoSuporteButton]}
+                            onPress={() => {
+                                onSuporte();
+                                onClose();
+                            }}
+                        >
+                            <Text style={styles.popupReembolsoSuporteButtonText}>Suporte</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
+}
+
 function CardServico({
     nome,
     status,
@@ -218,7 +278,9 @@ function CardServico({
     motivoReembolso,
     foto,
     onConfirmarPress,
-    onCancelarPress
+    onCancelarPress,
+    onReembolsoPress,
+    mostrarReembolso = false
 }: CardServicoProps) {
 
     const isConcluido = status === "Concluído";
@@ -308,6 +370,22 @@ function CardServico({
                             <Feather name="clock" size={24} color="#FF9800" />
                             <Text style={[styles.statusText, { color: '#FF9800' }]}>Reembolso</Text>
                         </View>
+                    ) : mostrarReembolso ? (
+                        <>
+                            <TouchableOpacity
+                                style={styles.confirmButton}
+                                onPress={onConfirmarPress}
+                            >
+                                <Text style={styles.confirmButtonText}>Confirmar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.reembolsoButton}
+                                onPress={onReembolsoPress}
+                            >
+                                <Text style={styles.reembolsoButtonText}>Reembolso</Text>
+                            </TouchableOpacity>
+                        </>
                     ) : (
                         <>
                             <TouchableOpacity
@@ -332,9 +410,11 @@ function CardServico({
 }
 
 export default function Index() {
+    const router = useRouter();
     const [popupConfirmarVisible, setPopupConfirmarVisible] = useState<boolean>(false);
     const [popupAvaliacaoVisible, setPopupAvaliacaoVisible] = useState<boolean>(false);
     const [popupCancelarVisible, setPopupCancelarVisible] = useState<boolean>(false);
+    const [popupReembolsoVisible, setPopupReembolsoVisible] = useState<boolean>(false);
 
     const [servicoSelecionado, setServicoSelecionado] = useState<{ nome: string } | null>(null);
 
@@ -346,6 +426,11 @@ export default function Index() {
     const handleCancelarPress = (servico: { nome: string }) => {
         setServicoSelecionado(servico);
         setPopupCancelarVisible(true);
+    };
+
+    const handleReembolsoPress = (servico: { nome: string }) => {
+        setServicoSelecionado(servico);
+        setPopupReembolsoVisible(true);
     };
 
     const handleConfirmarPedido = () => {
@@ -367,6 +452,17 @@ export default function Index() {
         setServicoSelecionado(null);
     };
 
+    const handleCancelarReembolso = () => {
+        console.log(`Reembolso cancelado para ${servicoSelecionado?.nome}`);
+        setServicoSelecionado(null);
+    };
+
+    const handleSuporte = () => {
+        console.log(`Redirecionando para suporte - ${servicoSelecionado?.nome}`);
+        setServicoSelecionado(null);
+        router.push('/suporte');
+    };
+
     return (
         <View style={{ flex: 1, backgroundColor: colors.creme }}>
             <ScrollView
@@ -375,8 +471,7 @@ export default function Index() {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
-                    <Text style={styles.nameApp}>FRILA</Text>
-                    <Text style={styles.subtitle}>Dashboard</Text>
+                    <Text style={styles.title}>Pedidos</Text>
                 </View>
 
                 <CardServico
@@ -386,6 +481,16 @@ export default function Index() {
                     foto={require('@/assets/img/HOMEM5.jpg')}
                     onConfirmarPress={() => handleConfirmarPress({ nome: "João Silva" })}
                     onCancelarPress={() => handleCancelarPress({ nome: "João Silva" })}
+                />
+
+                <CardServico
+                    nome="João Pedro"
+                    status="Em Andamento"
+                    foto={require('@/assets/img/HOMEM4.jpg')}
+                    onConfirmarPress={() => handleConfirmarPress({ nome: "João Pedro" })}
+                    onCancelarPress={() => handleCancelarPress({ nome: "João Pedro" })}
+                    onReembolsoPress={() => handleReembolsoPress({ nome: "João Pedro" })}
+                    mostrarReembolso={true}
                 />
 
                 <CardServico
@@ -408,7 +513,7 @@ export default function Index() {
                 <CardServico
                     nome="Ana Souza"
                     status="Reembolso"
-                    motivoReembolso="Aguardando análise do comprador"
+                    motivoReembolso="Aguardando análise do suporte"
                     foto={require('@/assets/img/MULHER1.jpg')}
                     onConfirmarPress={() => handleConfirmarPress({ nome: "Ana Souza" })}
                     onCancelarPress={() => handleCancelarPress({ nome: "Ana Souza" })}
@@ -443,6 +548,17 @@ export default function Index() {
                     onConfirm={handleCancelarPedido}
                     nomeServico={servicoSelecionado?.nome}
                 />
+
+                <PopupReembolso
+                    visible={popupReembolsoVisible}
+                    onClose={() => {
+                        setPopupReembolsoVisible(false);
+                        setServicoSelecionado(null);
+                    }}
+                    onCancel={handleCancelarReembolso}
+                    onSuporte={handleSuporte}
+                    nomeServico={servicoSelecionado?.nome}
+                />
             </ScrollView>
 
             <Footer />
@@ -458,21 +574,15 @@ const styles = StyleSheet.create({
     },
 
     header: {
-        paddingTop: 40,
+        paddingTop: 60,
         paddingBottom: 20,
         alignItems: 'center'
     },
 
-    nameApp: {
-        fontSize: 90,
-        fontFamily: "GotuRegular",
-        color: colors.preto
-    },
-
-    subtitle: {
-        fontSize: 18,
-        color: colors.cinza,
-        marginTop: -30
+    title: {
+        fontSize: 32,
+        color: colors.preto,
+        fontWeight: '600'
     },
 
     content: {
@@ -631,6 +741,23 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
 
+    reembolsoButton: {
+        backgroundColor: 'transparent',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: '#C6A76A',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        alignItems: 'center'
+    },
+
+    reembolsoButtonText: {
+        color: '#C6A76A',
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center'
+    },
+
     statusContainer: {
         alignItems: 'center',
         justifyContent: 'center',
@@ -677,11 +804,34 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
 
+    popupReembolsoTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        textAlign: 'center'
+    },
+
+    popupReembolsoSubtitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+        textAlign: 'center'
+    },
+
     popupMessage: {
         fontSize: 16,
         color: colors.preto,
         textAlign: 'center',
         marginBottom: 24
+    },
+
+    popupReembolsoMessage: {
+        fontSize: 16,
+        color: colors.preto,
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+        paddingHorizontal: 10
     },
 
     popupButtonsContainer: {
@@ -694,30 +844,72 @@ const styles = StyleSheet.create({
     popupButton: {
         flex: 1,
         paddingVertical: 14,
-        borderRadius: 12,
+        borderRadius: 25,
         alignItems: 'center'
     },
 
     popupCancelButton: {
         backgroundColor: 'transparent',
+        borderRadius: 12,
         borderWidth: 2,
         borderColor: colors.marrom,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        alignItems: 'center'
     },
 
     popupCancelButtonText: {
         color: colors.marrom,
         fontSize: 16,
         fontWeight: '600',
+        textAlign: 'center'
     },
 
     popupConfirmButton: {
         backgroundColor: colors.marrom,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center'
     },
 
     popupConfirmButtonText: {
         color: colors.creme,
         fontSize: 16,
         fontWeight: '600',
+        textAlign: 'center'
+    },
+
+    popupReembolsoCancelButton: {
+        backgroundColor: 'transparent',
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: colors.marrom,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        alignItems: 'center'
+    },
+
+    popupReembolsoCancelButtonText: {
+        color: colors.marrom,
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center'
+    },
+
+    popupReembolsoSuporteButton: {
+        backgroundColor: colors.marrom,
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 12,
+        alignItems: 'center'
+    },
+
+    popupReembolsoSuporteButtonText: {
+        color: colors.creme,
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'center'
     },
 
     popupDisabledButton: {
