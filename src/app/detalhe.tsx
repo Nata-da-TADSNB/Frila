@@ -22,7 +22,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const HERO_IMAGES = [
   require("@/assets/img/FOTOFREELANCER1.png"),
-  require("@/assets/img/FOTOFREELANCER1.png"), 
+  require("@/assets/img/FOTOFREELANCER1.png"),
   require("@/assets/img/FOTOFREELANCER1.png"),
   require("@/assets/img/FOTOFREELANCER1.png"),
   require("@/assets/img/FOTOFREELANCER1.png"),
@@ -38,6 +38,11 @@ export default function ProviderDetail() {
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveIndex(index);
+  };
+
+  // Função para navegar para a tela de conversa
+  const handleNegotiate = () => {
+    router.push('/conversaC');
   };
 
   return (
@@ -129,7 +134,10 @@ export default function ProviderDetail() {
               <Text style={styles.priceLabel}>Valor estimado do serviço</Text>
               <Text style={styles.price}>$185</Text>
             </View>
-            <TouchableOpacity style={styles.negociarButton}>
+            <TouchableOpacity
+              style={styles.negociarButton}
+              onPress={handleNegotiate} // Adiciona o evento de press
+            >
               <Text style={styles.negociarText}>NEGOCIAR</Text>
             </TouchableOpacity>
           </View>

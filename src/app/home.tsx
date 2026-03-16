@@ -5,6 +5,7 @@ import { ServiceView } from "@/components/serviceView";
 import colors from "@/constants/Colors";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -14,13 +15,73 @@ import {
     View
 } from "react-native";
 
-export default function Index() {
+const servicosData = [
+    {
+        id: 1,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
+        nome: "Geovana Oliveira",
+        profissao: "Designer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 5,
+    },
+    {
+        id: 2,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
+        nome: "Jorge Silva",
+        profissao: "software developer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 4.2,
+    },
+    {
+        id: 3,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
+        nome: "Geovana Oliveira",
+        profissao: "Designer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 5,
+    },
+    {
+        id: 4,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
+        nome: "Jorge Silva",
+        profissao: "software developer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 4.2,
+    },
+    {
+        id: 5,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
+        nome: "Geovana Oliveira",
+        profissao: "Designer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 5,
+    },
+    {
+        id: 6,
+        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
+        nome: "Jorge Silva",
+        profissao: "software developer",
+        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
+        avaliacao: 4.2,
+    },
+];
 
+export default function Index() {
     const router = useRouter();
+    const [likedServices, setLikedServices] = useState<number[]>([]);
+
+    const handleLikePress = (serviceId: number) => {
+        setLikedServices(prev => {
+            if (prev.includes(serviceId)) {
+                return prev.filter(id => id !== serviceId);
+            } else {
+                return [...prev, serviceId];
+            }
+        });
+    };
 
     return (
         <View style={{ flex: 1 }}>
-
             <Screen style={styles.body}>
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
@@ -46,53 +107,19 @@ export default function Index() {
                         </View>
 
                         <View style={styles.containerServicos}>
-
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
-                                nome="Geovana Oliveira"
-                                profissao="Designer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={5}
-                            />
-
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
-                                nome="Jorge Silva"
-                                profissao="software developer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={4.2}
-                            />
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
-                                nome="Geovana Oliveira"
-                                profissao="Designer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={5}
-                            />
-
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
-                                nome="Jorge Silva"
-                                profissao="software developer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={4.2}
-                            />
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER.png")}
-                                nome="Geovana Oliveira"
-                                profissao="Designer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={5}
-                            />
-
-                            <ServiceView
-                                imageFreelancer={require("@/assets/img/FOTOFREELANCER1.png")}
-                                nome="Jorge Silva"
-                                profissao="software developer"
-                                descricao="Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia."
-                                avaliacao={4.2}
-                            />
-
+                            {servicosData.map((servico) => (
+                                <ServiceView
+                                    key={servico.id}
+                                    id={servico.id}
+                                    imageFreelancer={servico.imageFreelancer}
+                                    nome={servico.nome}
+                                    profissao={servico.profissao}
+                                    descricao={servico.descricao}
+                                    avaliacao={servico.avaliacao}
+                                    isLiked={likedServices.includes(servico.id)}
+                                    onLikePress={handleLikePress}
+                                />
+                            ))}
                         </View>
 
                     </ScrollView>
@@ -101,50 +128,41 @@ export default function Index() {
             </Screen>
 
             <Footer />
-
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
-
     body: {
         backgroundColor: colors.creme,
     },
-
     containerScroll: {
         flexGrow: 1,
         paddingBottom: 120
     },
-
     nameApp: {
         fontSize: 100,
         fontFamily: "GotuRegular",
     },
-
     inputContainer: {
         alignItems: "center",
         width: "100%",
         backgroundColor: "transparent"
     },
-
     containerFilters: {
         flexDirection: "row",
         justifyContent: "space-between",
         marginTop: 20,
     },
-
     textFilter: {
         fontFamily: "KohoLight",
         fontSize: 18,
         color: colors.cinza,
     },
-
     containerServicos: {
         width: "100%",
         height: "100%",
         marginTop: 10,
         gap: 20
     }
-
 });

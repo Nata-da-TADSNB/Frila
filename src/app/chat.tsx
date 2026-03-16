@@ -20,8 +20,9 @@ type ChatType = 'usuario' | 'freelancer';
 interface ChatContact {
     id: string;
     name: string;
-    photo: any; 
+    photo: any;
     unreadCount: number;
+    photoId?: string; 
 }
 
 export default function ChatScreen() {
@@ -32,17 +33,17 @@ export default function ChatScreen() {
     const [selectedChat, setSelectedChat] = useState<ChatContact | null>(null);
 
     const userChats: ChatContact[] = [
-        { id: '1', name: 'Andrey Silva', photo: require('@/assets/img/FOTOFREELANCER1.png'), unreadCount: 3 },
-        { id: '2', name: 'Maria Santos', photo: require('@/assets/img/MULHER1.jpg'), unreadCount: 1 },
-        { id: '3', name: 'João Pedro', photo: require('@/assets/img/HOMEM2.jpg'), unreadCount: 0 },
-        { id: '4', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 2 },
+        { id: '1', name: 'Andrey Silva', photo: require('@/assets/img/FOTOFREELANCER1.png'), unreadCount: 3, photoId: 'FOTOFREELANCER1' },
+        { id: '2', name: 'Maria Santos', photo: require('@/assets/img/MULHER1.jpg'), unreadCount: 1, photoId: 'MULHER1' },
+        { id: '3', name: 'João Pedro', photo: require('@/assets/img/HOMEM2.jpg'), unreadCount: 0, photoId: 'HOMEM2' },
+        { id: '4', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 2, photoId: 'SUPORTE' },
     ];
 
     const freelancerChats: ChatContact[] = [
-        { id: '5', name: 'Carlos Eduardo', photo: require('@/assets/img/HOMEM3.jpg'), unreadCount: 5 },
-        { id: '6', name: 'Ana Beatriz', photo: require('@/assets/img/MULHER2.jpg'), unreadCount: 2 },
-        { id: '7', name: 'Lucas Mendes', photo: require('@/assets/img/HOMEM4.jpg'), unreadCount: 0 },
-        { id: '8', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 1 },
+        { id: '5', name: 'Carlos Eduardo', photo: require('@/assets/img/HOMEM3.jpg'), unreadCount: 5, photoId: 'HOMEM3' },
+        { id: '6', name: 'Ana Beatriz', photo: require('@/assets/img/MULHER2.jpg'), unreadCount: 2, photoId: 'MULHER2' },
+        { id: '7', name: 'Lucas Mendes', photo: require('@/assets/img/HOMEM4.jpg'), unreadCount: 0, photoId: 'HOMEM4' },
+        { id: '8', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 1, photoId: 'SUPORTE' },
     ];
 
     const getCurrentChats = () => {
@@ -82,12 +83,16 @@ export default function ChatScreen() {
     };
 
     const handleOpenChat = (chat: ChatContact) => {
+        const destinationScreen = activeTab === 'usuario' ? './conversaC' : './conversaF';
+
         router.push({
-            pathname: './chat/mensagens',
+            pathname: destinationScreen,
             params: {
                 contactId: chat.id,
                 contactName: chat.name,
-                contactPhoto: chat.photo
+                contactPhotoId: chat.photoId || '', 
+                unreadCount: chat.unreadCount.toString(),
+                userType: activeTab 
             }
         });
     };

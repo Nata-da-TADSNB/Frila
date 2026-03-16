@@ -1,8 +1,7 @@
-import { Text, View, StyleSheet, Pressable, Image } from "react-native";
 import colors from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type Props = {
     nome: string
@@ -10,9 +9,28 @@ type Props = {
     descricao: string
     imageFreelancer: any
     avaliacao: number
+    id: number
+    isLiked?: boolean
+    onLikePress?: (id: number) => void
 }
 
-export function ServiceView({ nome, profissao, descricao, imageFreelancer, avaliacao }: Props) {
+export function ServiceView({
+    nome,
+    profissao,
+    descricao,
+    imageFreelancer,
+    avaliacao,
+    id,
+    isLiked = false,
+    onLikePress
+}: Props) {
+
+    const handleLikePress = () => {
+        if (onLikePress) {
+            onLikePress(id);
+        }
+    };
+
     return (
         <View style={styles.container}>
 
@@ -28,9 +46,13 @@ export function ServiceView({ nome, profissao, descricao, imageFreelancer, avali
                     <Text style={styles.textAvaliacao}>{avaliacao}</Text>
                 </View>
 
-                <View style={styles.favorito}>
-                    <Ionicons name="heart-outline" size={18} color="white" />
-                </View>
+                <Pressable onPress={handleLikePress} style={styles.favorito}>
+                    <Ionicons
+                        name={isLiked ? "heart" : "heart-outline"}
+                        size={18}
+                        color={isLiked ? colors.rosa : "white"}
+                    />
+                </Pressable>
 
             </View>
 

@@ -6,6 +6,8 @@ const Colors = {
   preto: "#000000",
   cinza: "#4A4A4A",
   dourado: "#C6A76A",
+  rosa: "#8B4F4F",
+  verde: "#132b11",
 };
 
 export default Colors;

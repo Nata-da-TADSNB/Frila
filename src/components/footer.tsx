@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     favoriteButton: {
         position: "absolute",
         top: -20,
-        backgroundColor: colors.marrom,
+        backgroundColor: colors.rosa,
         width: 60,
         height: 60,
         borderRadius: 30,
