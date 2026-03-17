@@ -137,7 +137,7 @@ export default function ChatComprador() {
         }
     ]);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [selectedProposal, setSelectedProposal] = useState<any>(null);
+    const [selectedProposalId, setSelectedProposalId] = useState<number | null>(null);
     const scrollViewRef = useRef<ScrollView>(null);
 
     const getCurrentTime = () => {
@@ -259,30 +259,30 @@ export default function ChatComprador() {
         }
     };
 
-    const handlePayPress = (proposal: any) => {
-        setSelectedProposal(proposal);
-        setShowConfirmModal(true);
+    const handlePayPress = (messageId: number) => {
+    setSelectedProposalId(messageId);
+    setShowConfirmModal(true);
     };
 
     const handleConfirmPayment = () => {
-        setMessages(prevMessages =>
-            prevMessages.map(msg => {
-                if (msg.type === 'proposal' && msg.proposal === selectedProposal) {
-                    return {
-                        ...msg,
-                        proposal: {
-                            ...msg.proposal,
-                            status: 'accepted'
-                        }
-                    };
-                }
-                return msg;
-            })
-        );
+    setMessages(prevMessages =>
+        prevMessages.map(msg => {
+            if (msg.id === selectedProposalId && msg.type === 'proposal') {
+                return {
+                    ...msg,
+                    proposal: {
+                        ...msg.proposal!,
+                        status: 'accepted'
+                    }
+                };
+            }
+            return msg;
+        })
+    );
 
-        setShowConfirmModal(false);
-        Alert.alert("Sucesso", "Pagamento realizado com sucesso!");
-    };
+    setShowConfirmModal(false);
+    Alert.alert("Sucesso", "Pagamento realizado com sucesso!");
+};
 
     return (
         <View style={{ flex: 1, backgroundColor: colors.creme }}>
@@ -327,7 +327,7 @@ export default function ChatComprador() {
                             <ProposalMessage
                                 key={msg.id}
                                 proposal={msg.proposal}
-                                onPayPress={() => handlePayPress(msg.proposal)}
+                                onPayPress={() => handlePayPress(msg.id)}
                             />
                         ) : (
                             <MessageBubble
