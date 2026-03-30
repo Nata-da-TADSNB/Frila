@@ -4,47 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-// -------------------- TYPES -------------------- //
-
-type EstrelasAvaliacaoProps = {
-    avaliacao: number;
-    setAvaliacao: (nota: number) => void;
-};
-
-type PopupConfirmarPedidoProps = {
-    visible: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    nomeServico?: string;
-};
-
-type PopupAvaliacaoProps = {
-    visible: boolean;
-    onClose: () => void;
-    onAvaliar: (nota: number) => void;
-    nomeComprador?: string;
-};
-
-type PopupCancelarPedidoProps = {
-    visible: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    nomeServico?: string;
-};
-
-type CardServicoProps = {
-    nome: string;
-    status: string;
-    mensagemCancelamento?: string;
-    motivoReembolso?: string;
-    foto: any;
-    onConfirmarPress: () => void;
-    onCancelarPress: () => void;
-};
-
 // -------------------- COMPONENTS -------------------- //
 
-function EstrelasAvaliacao({ avaliacao, setAvaliacao }: EstrelasAvaliacaoProps) {
+function EstrelasAvaliacao({ avaliacao, setAvaliacao }) {
     return (
         <View style={styles.estrelasContainer}>
             {[1, 2, 3, 4, 5].map((estrela) => (
@@ -64,7 +26,7 @@ function EstrelasAvaliacao({ avaliacao, setAvaliacao }: EstrelasAvaliacaoProps) 
     );
 }
 
-function PopupConfirmarPedido({ visible, onClose, onConfirm }: PopupConfirmarPedidoProps) {
+function PopupConfirmarPedido({ visible, onClose, onConfirm }) {
     return (
         <Modal
             animationType="fade"
@@ -105,8 +67,8 @@ function PopupConfirmarPedido({ visible, onClose, onConfirm }: PopupConfirmarPed
     );
 }
 
-function PopupAvaliacao({ visible, onClose, onAvaliar }: PopupAvaliacaoProps) {
-    const [avaliacao, setAvaliacao] = useState<number>(0);
+function PopupAvaliacao({ visible, onClose, onAvaliar }) {
+    const [avaliacao, setAvaliacao] = useState(0);
 
     const handleAvaliar = () => {
         if (avaliacao > 0) {
@@ -170,7 +132,7 @@ function PopupAvaliacao({ visible, onClose, onAvaliar }: PopupAvaliacaoProps) {
     );
 }
 
-function PopupCancelarPedido({ visible, onClose, onConfirm }: PopupCancelarPedidoProps) {
+function PopupCancelarPedido({ visible, onClose, onConfirm }) {
     return (
         <Modal
             animationType="fade"
@@ -219,7 +181,7 @@ function CardServico({
     foto,
     onConfirmarPress,
     onCancelarPress
-}: CardServicoProps) {
+}) {
 
     const isConcluido = status === "Concluído";
     const isCancelado = status === "Cancelado";
@@ -332,18 +294,18 @@ function CardServico({
 }
 
 export default function Index() {
-    const [popupConfirmarVisible, setPopupConfirmarVisible] = useState<boolean>(false);
-    const [popupAvaliacaoVisible, setPopupAvaliacaoVisible] = useState<boolean>(false);
-    const [popupCancelarVisible, setPopupCancelarVisible] = useState<boolean>(false);
+    const [popupConfirmarVisible, setPopupConfirmarVisible] = useState(false);
+    const [popupAvaliacaoVisible, setPopupAvaliacaoVisible] = useState(false);
+    const [popupCancelarVisible, setPopupCancelarVisible] = useState(false);
 
-    const [servicoSelecionado, setServicoSelecionado] = useState<{ nome: string } | null>(null);
+    const [servicoSelecionado, setServicoSelecionado] = useState(null);
 
-    const handleConfirmarPress = (servico: { nome: string }) => {
+    const handleConfirmarPress = (servico) => {
         setServicoSelecionado(servico);
         setPopupConfirmarVisible(true);
     };
 
-    const handleCancelarPress = (servico: { nome: string }) => {
+    const handleCancelarPress = (servico) => {
         setServicoSelecionado(servico);
         setPopupCancelarVisible(true);
     };
@@ -355,7 +317,7 @@ export default function Index() {
         }, 300);
     };
 
-    const handleAvaliar = (nota: number) => {
+    const handleAvaliar = (nota) => {
         console.log(`Avaliação do comprador ${servicoSelecionado?.nome}: ${nota} estrelas`);
         setPopupAvaliacaoVisible(false);
         setServicoSelecionado(null);

@@ -15,31 +15,21 @@ import {
     View,
 } from 'react-native';
 
-type ChatType = 'usuario' | 'freelancer';
-
-interface ChatContact {
-    id: string;
-    name: string;
-    photo: any;
-    unreadCount: number;
-    photoId?: string; 
-}
-
 export default function ChatScreen() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<ChatType>('usuario');
+    const [activeTab, setActiveTab] = useState('usuario');
     const [searchText, setSearchText] = useState('');
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-    const [selectedChat, setSelectedChat] = useState<ChatContact | null>(null);
+    const [selectedChat, setSelectedChat] = useState(null);
 
-    const userChats: ChatContact[] = [
+    const userChats = [
         { id: '1', name: 'Andrey Silva', photo: require('@/assets/img/FOTOFREELANCER1.png'), unreadCount: 3, photoId: 'FOTOFREELANCER1' },
         { id: '2', name: 'Maria Santos', photo: require('@/assets/img/MULHER1.jpg'), unreadCount: 1, photoId: 'MULHER1' },
         { id: '3', name: 'João Pedro', photo: require('@/assets/img/HOMEM2.jpg'), unreadCount: 0, photoId: 'HOMEM2' },
         { id: '4', name: 'Suporte', photo: require('@/assets/img/SUPORTE.png'), unreadCount: 2, photoId: 'SUPORTE' },
     ];
 
-    const freelancerChats: ChatContact[] = [
+    const freelancerChats = [
         { id: '5', name: 'Carlos Eduardo', photo: require('@/assets/img/HOMEM3.jpg'), unreadCount: 5, photoId: 'HOMEM3' },
         { id: '6', name: 'Ana Beatriz', photo: require('@/assets/img/MULHER2.jpg'), unreadCount: 2, photoId: 'MULHER2' },
         { id: '7', name: 'Lucas Mendes', photo: require('@/assets/img/HOMEM4.jpg'), unreadCount: 0, photoId: 'HOMEM4' },
@@ -64,7 +54,7 @@ export default function ChatScreen() {
         0
     );
 
-    const handleDeletePress = (chat: ChatContact) => {
+    const handleDeletePress = (chat) => {
         setSelectedChat(chat);
         setDeleteModalVisible(true);
     };
@@ -82,7 +72,7 @@ export default function ChatScreen() {
         setSelectedChat(null);
     };
 
-    const handleOpenChat = (chat: ChatContact) => {
+    const handleOpenChat = (chat) => {
         const destinationScreen = activeTab === 'usuario' ? './conversaC' : './conversaF';
 
         router.push({
@@ -97,7 +87,7 @@ export default function ChatScreen() {
         });
     };
 
-    const renderChatItem = ({ item }: { item: ChatContact }) => (
+    const renderChatItem = ({ item }) => (
         <TouchableOpacity
             style={styles.chatItem}
             onPress={() => handleOpenChat(item)}

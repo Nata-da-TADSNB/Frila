@@ -18,22 +18,7 @@ import {
     View,
 } from "react-native";
 
-type MessageType = {
-    id: number;
-    time: string;
-    isMe: boolean;
-    type: 'text' | 'image' | 'proposal';
-    text?: string;
-    uri?: string;
-    proposal?: {
-        value: number;
-        description: string;
-        time: string;
-        status?: 'pending' | 'accepted';
-    };
-};
-
-const MessageBubble = ({ message, isMe }: { message: MessageType; isMe: boolean }) => (
+const MessageBubble = ({ message, isMe }) => (
     <View style={[
         styles.messageWrapper,
         isMe ? styles.myMessageWrapper : styles.otherMessageWrapper
@@ -64,39 +49,39 @@ const MessageBubble = ({ message, isMe }: { message: MessageType; isMe: boolean 
     </View>
 );
 
-const FreelancerProposalMessage = ({ proposal, isMe }: { proposal: any; isMe: boolean }) => (
-    <View style={[styles.messageWrapper, isMe ? styles.myMessageWrapper : styles.otherMessageWrapper]}>
-        <View style={[styles.proposalBubble, isMe && styles.myProposalBubble]}>
-            <Text style={[styles.proposalTitle, isMe && styles.myProposalTitle]}>MINHA PROPOSTA</Text>
+const ProposalMessage = ({ proposal, onPayPress }) => (
+    <View style={[styles.messageWrapper, styles.otherMessageWrapper]}>
+        <View style={[styles.proposalBubble]}>
+            <Text style={styles.proposalTitle}>PROPOSTA RECEBIDA</Text>
 
             <View style={styles.proposalValueRow}>
-                <Text style={[styles.proposalLabel, isMe && styles.myProposalText]}>Valor:</Text>
+                <Text style={styles.proposalLabel}>Valor:</Text>
                 <View style={styles.proposalValueContainer}>
-                    <Ionicons
-                        name="cash-outline"
-                        size={20}
-                        color={isMe ? colors.creme : colors.marrom}
-                    />
-                    <Text style={[styles.proposalValue, isMe && styles.myProposalValue]}>
-                        R${proposal.value},00
-                    </Text>
+                    <Ionicons name="cash-outline" size={20} color={colors.marrom} />
+                    <Text style={styles.proposalValue}>R${proposal.value},00</Text>
                 </View>
             </View>
 
-            <Text style={[styles.proposalDescription, isMe && styles.myProposalText]}>
+            <Text style={styles.proposalDescription}>
                 {proposal.description}
             </Text>
 
             {proposal.status === 'pending' && (
-                <View style={styles.proposalStatus}>
-                    <Ionicons name="time-outline" size={16} color={colors.creme} />
-                    <Text style={styles.proposalStatusText}>Aguardando pagamento</Text>
-                </View>
+                <>
+                    <TouchableOpacity style={styles.payButton} onPress={onPayPress}>
+                        <Ionicons name="card-outline" size={18} color={colors.creme} />
+                        <Text style={styles.payButtonText}>PAGAR</Text>
+                    </TouchableOpacity>
+                    <View style={styles.proposalStatus}>
+                        <Ionicons name="time-outline" size={16} color={colors.dourado} />
+                        <Text style={styles.proposalStatusText}>Aguardando pagamento</Text>
+                    </View>
+                </>
             )}
             {proposal.status === 'accepted' && (
                 <View style={[styles.proposalStatus, styles.proposalStatusAccepted]}>
                     <Ionicons name="checkmark-circle-outline" size={16} color={colors.creme} />
-                    <Text style={styles.proposalStatusText}>Proposta aceita</Text>
+                    <Text style={styles.proposalStatusText}>Pagamento confirmado</Text>
                 </View>
             )}
 
@@ -105,30 +90,40 @@ const FreelancerProposalMessage = ({ proposal, isMe }: { proposal: any; isMe: bo
     </View>
 );
 
-export default function ChatFreelancer() {
+export default function ChatComprador() {
     const router = useRouter();
     const [message, setMessage] = useState("");
-    const [showProposalModal, setShowProposalModal] = useState(false);
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [proposalValue, setProposalValue] = useState("");
-    const [proposalDescription, setProposalDescription] = useState("");
-    const [messages, setMessages] = useState<MessageType[]>([
+    const [messages, setMessages] = useState([
         {
             id: 1,
-            text: "Olá, estou interessado no seu serviço",
+            text: "Olá, tudo bem?",
             time: "10:30",
             isMe: false,
             type: "text"
         },
         {
             id: 2,
-            text: "Ótimo! Podemos conversar sobre os detalhes?",
+            text: "Tudo ótimo! Como posso ajudar?",
             time: "10:31",
             isMe: true,
             type: "text"
+        },
+        {
+            id: 3,
+            type: "proposal",
+            proposal: {
+                value: 100,
+                description: "Se estiver de acordo com o valor apresentado, realiza o pagamento da respectiva alíquota do total abaixo.",
+                time: "10:32",
+                status: 'pending'
+            },
+            isMe: false,
+            time: "10:32"
         }
     ]);
-    const scrollViewRef = useRef<ScrollView>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [selectedProposalId, setSelectedProposalId] = useState(null);
+    const scrollViewRef = useRef(null);
 
     const getCurrentTime = () => {
         const now = new Date();
@@ -137,7 +132,7 @@ export default function ChatFreelancer() {
 
     const handleSendMessage = () => {
         if (message.trim()) {
-            const newMessage: MessageType = {
+            const newMessage = {
                 id: messages.length + 1,
                 text: message.trim(),
                 time: getCurrentTime(),
@@ -151,43 +146,6 @@ export default function ChatFreelancer() {
                 scrollViewRef.current?.scrollToEnd({ animated: true });
             }, 100);
         }
-    };
-
-    const handleSendProposal = () => {
-        if (proposalValue && proposalDescription) {
-            setShowProposalModal(false);
-            setShowConfirmModal(true);
-        } else {
-            Alert.alert("Atenção", "Preencha o valor e a descrição da proposta");
-        }
-    };
-
-    const handleConfirmProposal = () => {
-        const value = parseFloat(proposalValue);
-
-        const newProposal: MessageType = {
-            id: messages.length + 1,
-            type: "proposal",
-            proposal: {
-                value: value,
-                description: proposalDescription,
-                time: getCurrentTime(),
-                status: 'pending'
-            },
-            isMe: true,
-            time: getCurrentTime()
-        };
-
-        setMessages(prevMessages => [...prevMessages, newProposal]);
-        setShowConfirmModal(false);
-        setProposalValue("");
-        setProposalDescription("");
-
-        setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-
-        Alert.alert("Sucesso", "Proposta enviada com sucesso!");
     };
 
     const handleAttachPress = () => {
@@ -230,10 +188,11 @@ export default function ChatFreelancer() {
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 quality: 0.8,
+                base64: false,
             });
 
             if (!result.canceled && result.assets && result.assets[0]) {
-                const newMessage: MessageType = {
+                const newMessage = {
                     id: messages.length + 1,
                     type: "image",
                     uri: result.assets[0].uri,
@@ -263,10 +222,11 @@ export default function ChatFreelancer() {
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
                 quality: 0.8,
+                base64: false,
             });
 
             if (!result.canceled && result.assets && result.assets[0]) {
-                const newMessage: MessageType = {
+                const newMessage = {
                     id: messages.length + 1,
                     type: "image",
                     uri: result.assets[0].uri,
@@ -284,10 +244,32 @@ export default function ChatFreelancer() {
         }
     };
 
-    const calculateDiscountedValue = () => {
-        const value = parseFloat(proposalValue) || 0;
-        return (value * 0.9).toFixed(2);
+    const handlePayPress = (messageId) => {
+        setSelectedProposalId(messageId);
+        setShowConfirmModal(true);
     };
+
+    const handleConfirmPayment = () => {
+        setMessages(prevMessages =>
+            prevMessages.map(msg => {
+                if (msg.id === selectedProposalId && msg.type === 'proposal') {
+                    return {
+                        ...msg,
+                        proposal: {
+                            ...msg.proposal,
+                            status: 'accepted'
+                        }
+                    };
+                }
+                return msg;
+            })
+        );
+
+        setShowConfirmModal(false);
+        Alert.alert("Sucesso", "Pagamento realizado com sucesso!");
+    };
+
+    const selectedProposal = messages.find(msg => msg.id === selectedProposalId && msg.type === 'proposal')?.proposal;
 
     return (
         <View style={{ flex: 1, backgroundColor: colors.creme }}>
@@ -302,10 +284,10 @@ export default function ChatFreelancer() {
                         style={styles.headerAvatar}
                     />
                     <View style={styles.headerText}>
-                        <Text style={styles.headerName}>João Cliente</Text>
+                        <Text style={styles.headerName}>Marlon Caio</Text>
                         <View style={styles.headerRating}>
                             <Ionicons name="star" size={14} color={colors.dourado} />
-                            <Text style={styles.headerRatingText}>4.8</Text>
+                            <Text style={styles.headerRatingText}>4.5</Text>
                         </View>
                     </View>
                 </View>
@@ -329,10 +311,10 @@ export default function ChatFreelancer() {
                 >
                     {messages.map((msg) => (
                         msg.type === "proposal" && msg.proposal ? (
-                            <FreelancerProposalMessage
+                            <ProposalMessage
                                 key={msg.id}
                                 proposal={msg.proposal}
-                                isMe={msg.isMe}
+                                onPayPress={() => handlePayPress(msg.id)}
                             />
                         ) : (
                             <MessageBubble
@@ -366,13 +348,6 @@ export default function ChatFreelancer() {
                     </View>
 
                     <TouchableOpacity
-                        style={styles.proposalButton}
-                        onPress={() => setShowProposalModal(true)}
-                    >
-                        <Ionicons name="cash-outline" size={20} color={colors.creme} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
                         style={[
                             styles.sendButton,
                             !message.trim() && styles.sendButtonDisabled
@@ -389,86 +364,6 @@ export default function ChatFreelancer() {
                 </View>
 
                 <Modal
-                    visible={showProposalModal}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setShowProposalModal(false)}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.proposalModal}>
-                            <View style={styles.modalHeader}>
-                                <Ionicons name="cash-outline" size={32} color={colors.marrom} />
-                                <Text style={styles.proposalModalTitle}>ENVIAR PROPOSTA</Text>
-                            </View>
-
-                            <Text style={styles.proposalModalSubtitle}>
-                                Você deseja enviar o valor da proposta? coloque o valor abaixo:
-                            </Text>
-
-                            <View style={styles.valueInputContainer}>
-                                <Ionicons name="cash-outline" size={24} color={colors.marrom} />
-                                <TextInput
-                                    style={styles.valueInput}
-                                    placeholder="100,00"
-                                    placeholderTextColor={colors.cinza}
-                                    value={proposalValue}
-                                    onChangeText={setProposalValue}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-
-                            <TextInput
-                                style={styles.descriptionInput}
-                                placeholder="Descreva sua proposta..."
-                                placeholderTextColor={colors.cinza}
-                                value={proposalDescription}
-                                onChangeText={setProposalDescription}
-                                multiline
-                                numberOfLines={3}
-                            />
-
-                            {proposalValue ? (
-                                <View style={styles.discountContainer}>
-                                    <Text style={styles.discountText}>
-                                        Valor total a receber:
-                                    </Text>
-                                    <View style={styles.discountRow}>
-                                        <Text style={styles.originalValue}>R${proposalValue}</Text>
-                                        <Text style={styles.discountPercentage}>-10%</Text>
-                                    </View>
-                                    <View style={styles.discountedValueContainer}>
-                                        <Ionicons name="cash-outline" size={28} color={colors.marrom} />
-                                        <Text style={styles.discountedValue}>
-                                            R${calculateDiscountedValue()}
-                                        </Text>
-                                    </View>
-                                </View>
-                            ) : null}
-
-                            <View style={styles.modalActions}>
-                                <TouchableOpacity
-                                    style={styles.cancelButton}
-                                    onPress={() => {
-                                        setShowProposalModal(false);
-                                        setProposalValue("");
-                                        setProposalDescription("");
-                                    }}
-                                >
-                                    <Text style={styles.cancelButtonText}>Cancelar</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={styles.confirmButton}
-                                    onPress={handleSendProposal}
-                                >
-                                    <Ionicons name="send-outline" size={18} color={colors.creme} />
-                                    <Text style={styles.confirmButtonText}>ENVIAR</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </View>
-                </Modal>
-
-                <Modal
                     visible={showConfirmModal}
                     transparent
                     animationType="fade"
@@ -477,19 +372,19 @@ export default function ChatFreelancer() {
                     <View style={styles.modalOverlay}>
                         <View style={styles.confirmationModal}>
                             <View style={styles.modalHeader}>
-                                <Ionicons name="alert-circle-outline" size={32} color={colors.marrom} />
-                                <Text style={styles.confirmationTitle}>CONFIRMAÇÃO</Text>
+                                <Ionicons name="card-outline" size={32} color={colors.marrom} />
+                                <Text style={styles.confirmationTitle}>CONFIRMAÇÃO DE PAGAMENTO</Text>
                             </View>
 
                             <View style={styles.confirmationValueContainer}>
                                 <Ionicons name="cash-outline" size={24} color={colors.marrom} />
                                 <Text style={styles.confirmationValue}>
-                                    R${proposalValue},00
+                                    R${selectedProposal?.value || '100'},00
                                 </Text>
                             </View>
 
                             <Text style={styles.confirmationText}>
-                                confirmo o valor para prosseguir com o envio da proposta.
+                                Confirmar o pagamento deste valor para o freelancer?
                             </Text>
 
                             <View style={styles.modalActions}>
@@ -501,10 +396,10 @@ export default function ChatFreelancer() {
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     style={styles.confirmButton}
-                                    onPress={handleConfirmProposal}
+                                    onPress={handleConfirmPayment}
                                 >
                                     <Ionicons name="checkmark-outline" size={18} color={colors.creme} />
-                                    <Text style={styles.confirmButtonText}>CONFIRMAR</Text>
+                                    <Text style={styles.confirmButtonText}>PAGAR</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -631,18 +526,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.marromClaro,
     },
-    myProposalBubble: {
-        backgroundColor: colors.marromClaro,
-        borderColor: colors.marrom,
-    },
     proposalTitle: {
         fontSize: 14,
         fontFamily: 'KohoBold',
         color: colors.marrom,
         marginBottom: 10,
-    },
-    myProposalTitle: {
-        color: colors.creme,
     },
     proposalValueRow: {
         flexDirection: 'row',
@@ -665,12 +553,6 @@ const styles = StyleSheet.create({
         fontFamily: 'KohoBold',
         color: colors.marrom,
     },
-    myProposalValue: {
-        color: colors.creme,
-    },
-    myProposalText: {
-        color: colors.creme,
-    },
     proposalDescription: {
         fontSize: 13,
         fontFamily: 'KohoLight',
@@ -678,8 +560,23 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         lineHeight: 18,
     },
+    payButton: {
+        backgroundColor: colors.marrom,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginBottom: 8,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 8,
+    },
+    payButtonText: {
+        color: colors.creme,
+        fontSize: 14,
+        fontFamily: 'KohoBold',
+    },
     proposalStatus: {
-        backgroundColor: colors.dourado,
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 5,
@@ -688,12 +585,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
+        backgroundColor: colors.bege,
     },
     proposalStatusAccepted: {
         backgroundColor: colors.verde,
     },
     proposalStatusText: {
-        color: colors.creme,
+        color: colors.dourado,
         fontSize: 12,
         fontFamily: 'KohoMedium',
     },
@@ -734,14 +632,6 @@ const styles = StyleSheet.create({
         padding: 0,
         margin: 0,
     },
-    proposalButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: colors.marrom,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     sendButton: {
         width: 40,
         height: 40,
@@ -749,6 +639,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.marrom,
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 0,
     },
     sendButtonDisabled: {
         backgroundColor: colors.marromClaro,
@@ -762,95 +653,6 @@ const styles = StyleSheet.create({
     modalHeader: {
         alignItems: 'center',
         marginBottom: 15,
-    },
-    proposalModal: {
-        width: '85%',
-        backgroundColor: colors.creme,
-        borderRadius: 15,
-        padding: 25,
-    },
-    proposalModalTitle: {
-        fontSize: 18,
-        fontFamily: 'KohoBold',
-        color: colors.marrom,
-        textAlign: 'center',
-        marginTop: 8,
-    },
-    proposalModalSubtitle: {
-        fontSize: 14,
-        fontFamily: 'KohoRegular',
-        color: colors.cinza,
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    valueInputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.marromClaro,
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        gap: 10,
-    },
-    valueInput: {
-        flex: 1,
-        fontSize: 18,
-        fontFamily: 'KohoBold',
-        color: colors.preto,
-        paddingVertical: 12,
-    },
-    descriptionInput: {
-        borderWidth: 1,
-        borderColor: colors.marromClaro,
-        borderRadius: 8,
-        padding: 15,
-        fontSize: 14,
-        fontFamily: 'KohoRegular',
-        color: colors.preto,
-        textAlignVertical: 'top',
-        marginBottom: 20,
-        minHeight: 80,
-    },
-    discountContainer: {
-        backgroundColor: colors.bege,
-        padding: 15,
-        borderRadius: 8,
-        marginBottom: 20,
-        alignItems: 'center',
-    },
-    discountText: {
-        fontSize: 14,
-        fontFamily: 'KohoRegular',
-        color: colors.cinza,
-        marginBottom: 10,
-    },
-    discountRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        marginBottom: 10,
-    },
-    originalValue: {
-        fontSize: 16,
-        fontFamily: 'KohoRegular',
-        color: colors.cinza,
-        textDecorationLine: 'line-through',
-    },
-    discountPercentage: {
-        fontSize: 16,
-        fontFamily: 'KohoBold',
-        color: colors.marrom,
-    },
-    discountedValueContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    discountedValue: {
-        fontSize: 24,
-        fontFamily: 'KohoBold',
-        color: colors.marrom,
     },
     confirmationModal: {
         width: '85%',

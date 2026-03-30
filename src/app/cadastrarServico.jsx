@@ -14,20 +14,7 @@ import {
     View
 } from "react-native";
 
-type TipoServico = 'digital' | 'presencial' | 'delivery' | null;
-
-type PopupSucessoProps = {
-    visible: boolean;
-    onClose: () => void;
-};
-
-type PopupCancelarProps = {
-    visible: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-};
-
-function PopupSucesso({ visible, onClose }: PopupSucessoProps) {
+function PopupSucesso({ visible, onClose }) {
     const router = useRouter();
 
     const handleOk = () => {
@@ -68,7 +55,7 @@ function PopupSucesso({ visible, onClose }: PopupSucessoProps) {
     );
 }
 
-function PopupCancelar({ visible, onClose, onConfirm }: PopupCancelarProps) {
+function PopupCancelar({ visible, onClose, onConfirm }) {
     return (
         <Modal
             animationType="fade"
@@ -111,10 +98,10 @@ function PopupCancelar({ visible, onClose, onConfirm }: PopupCancelarProps) {
 
 export default function AdicionarServico() {
     const router = useRouter();
-    const [fotos, setFotos] = useState<string[]>([]);
+    const [fotos, setFotos] = useState([]);
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
-    const [tipoServico, setTipoServico] = useState<TipoServico>(null);
+    const [tipoServico, setTipoServico] = useState(null);
     const [endereco, setEndereco] = useState('');
     const [valorMedio, setValorMedio] = useState('100');
     const [mostrarEndereco, setMostrarEndereco] = useState(false);
@@ -126,7 +113,7 @@ export default function AdicionarServico() {
     const valorTaxa = valorNumerico * taxaPlataforma;
     const valorReceber = valorNumerico - valorTaxa;
 
-    const pickImage = async (index: number) => {
+    const pickImage = async (index) => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -141,12 +128,12 @@ export default function AdicionarServico() {
         }
     };
 
-    const removerFoto = (index: number) => {
+    const removerFoto = (index) => {
         const novasFotos = fotos.filter((_, i) => i !== index);
         setFotos(novasFotos);
     };
 
-    const selecionarTipoServico = (tipo: 'digital' | 'presencial' | 'delivery') => {
+    const selecionarTipoServico = (tipo) => {
         setTipoServico(tipo);
         setMostrarEndereco(tipo === 'presencial' || tipo === 'delivery');
         if (tipo === 'digital') {
