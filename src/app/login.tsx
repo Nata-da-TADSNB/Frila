@@ -1,8 +1,8 @@
 import Background from "@/components/backgroundImage";
-import { View, Text, StyleSheet, Pressable, } from "react-native";
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View, } from "react-native";
 
 export default function Index() {
         const router = useRouter();

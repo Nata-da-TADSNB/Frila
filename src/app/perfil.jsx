@@ -1,14 +1,12 @@
 import Colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
-import { Href, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-type FeatherIconName = React.ComponentProps<typeof Feather>['name'];
 
 export default function Index() {
     const router = useRouter();
 
-    const menuItems: { icon: FeatherIconName; text: string; route: Href }[] = [
+    const menuItems = [
         { icon: 'home', text: 'Home', route: '/home' },
         { icon: 'shopping-bag', text: 'Pedidos', route: '/pedidos' },
         { icon: 'message-circle', text: 'Chat', route: '/chat' },
@@ -19,7 +17,7 @@ export default function Index() {
         { icon: 'log-out', text: 'Sair', route: '/login' },
     ];
 
-    const handleNavigation = (route: Href, text: string) => {
+    const handleNavigation = (route, text) => {
         if (text === 'Sair') {
             console.log('Fazer logout');
         }

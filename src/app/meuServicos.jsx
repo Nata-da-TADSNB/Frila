@@ -1,8 +1,7 @@
-
 import { Footer } from "@/components/footerFreelancer";
 import colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Alert,
     Image,
@@ -14,33 +13,9 @@ import {
     View
 } from "react-native";
 
-// -------------------- TYPES -------------------- //
-
-type Servico = {
-    id: string;
-    nome: string;
-    descricao: string;
-    tipo: 'digital' | 'presencial' | 'delivery';
-    valor: number;
-    fotos: string[];
-    endereco?: string;
-};
-
-type CardMeuServicoProps = {
-    servico: Servico;
-    onExcluir: (id: string) => void;
-};
-
-type PopupExcluirServicoProps = {
-    visible: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    nomeServico: string;
-};
-
 // -------------------- COMPONENTS -------------------- //
 
-function PopupExcluirServico({ visible, onClose, onConfirm, nomeServico }: PopupExcluirServicoProps) {
+function PopupExcluirServico({ visible, onClose, onConfirm, nomeServico }) {
     return (
         <Modal
             animationType="fade"
@@ -82,7 +57,7 @@ function PopupExcluirServico({ visible, onClose, onConfirm, nomeServico }: Popup
     );
 }
 
-function CardMeuServico({ servico, onExcluir }: CardMeuServicoProps) {
+function CardMeuServico({ servico, onExcluir }) {
     const getTipoIcon = () => {
         switch (servico.tipo) {
             case 'digital': return 'monitor';
@@ -101,7 +76,7 @@ function CardMeuServico({ servico, onExcluir }: CardMeuServicoProps) {
         }
     };
 
-    const formatarValor = (valor: number) => {
+    const formatarValor = (valor) => {
         return valor.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
@@ -169,7 +144,7 @@ function CardMeuServico({ servico, onExcluir }: CardMeuServicoProps) {
 // -------------------- MAIN COMPONENT -------------------- //
 
 export default function MeusServicos() {
-    const [servicos, setServicos] = useState<Servico[]>([
+    const [servicos, setServicos] = useState([
         {
             id: '1',
             nome: 'Design de Logotipos',
@@ -199,9 +174,9 @@ export default function MeusServicos() {
     ]);
 
     const [popupExcluirVisible, setPopupExcluirVisible] = useState(false);
-    const [servicoSelecionado, setServicoSelecionado] = useState<Servico | null>(null);
+    const [servicoSelecionado, setServicoSelecionado] = useState(null);
 
-    const handleExcluir = (id: string) => {
+    const handleExcluir = (id) => {
         const servico = servicos.find(s => s.id === id);
         if (servico) {
             setServicoSelecionado(servico);

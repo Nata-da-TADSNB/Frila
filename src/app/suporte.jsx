@@ -2,7 +2,7 @@ import { Footer } from "@/components/footer";
 import Colors from "@/constants/Colors";
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     Modal,
     ScrollView,
@@ -13,13 +13,7 @@ import {
     View
 } from "react-native";
 
-type PopupSuporteProps = {
-    visible: boolean;
-    onClose: () => void;
-    onEnviar: (email: string, assunto: string) => void;
-};
-
-function PopupSuporte({ visible, onClose, onEnviar }: PopupSuporteProps) {
+function PopupSuporte({ visible, onClose, onEnviar }) {
     const [email, setEmail] = useState('');
     const [assunto, setAssunto] = useState('');
 
@@ -87,12 +81,7 @@ function PopupSuporte({ visible, onClose, onEnviar }: PopupSuporteProps) {
     );
 }
 
-type PerguntaFrequenteProps = {
-    pergunta: string;
-    resposta: string;
-};
-
-function PerguntaFrequente({ pergunta, resposta }: PerguntaFrequenteProps) {
+function PerguntaFrequente({ pergunta, resposta }) {
     const [aberto, setAberto] = useState(false);
 
     return (
@@ -150,7 +139,7 @@ export default function Suporte() {
         }
     ];
 
-    const handleEnviarSuporte = (email: string, assunto: string) => {
+    const handleEnviarSuporte = (email, assunto) => {
         console.log('Email:', email);
         console.log('Assunto:', assunto);
 
@@ -339,7 +328,7 @@ const styles = StyleSheet.create({
     },
     infoContato: {
         gap: 15,
-        marginBottom: 20,
+        marginBottom: 60,
     },
     infoItem: {
         flexDirection: 'row',
@@ -415,4 +404,4 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-});
+}); 
