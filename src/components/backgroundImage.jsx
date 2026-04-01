@@ -1,13 +1,7 @@
-import { ImageBackground, StyleSheet, ImageSourcePropType } from "react-native";
-import { ReactNode } from "react";
+import { ImageBackground, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 
-type Props = {
-  children: ReactNode;
-  source: ImageSourcePropType;
-};
-
-export default function Background({ children, source }: Props) {
+export default function Background({ children, source }) {
   return (
     <>
       <StatusBar translucent backgroundColor="transparent" />

@@ -3,17 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-type Props = {
-    nome: string
-    profissao: string
-    descricao: string
-    imageFreelancer: any
-    avaliacao: number
-    id: number
-    isLiked?: boolean
-    onLikePress?: (id: number) => void
-}
-
 export function ServiceView({
     nome,
     profissao,
@@ -23,7 +12,7 @@ export function ServiceView({
     id,
     isLiked = false,
     onLikePress
-}: Props) {
+}) {
 
     const handleLikePress = () => {
         if (onLikePress) {

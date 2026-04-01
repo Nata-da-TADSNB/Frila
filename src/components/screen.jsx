@@ -1,10 +1,4 @@
-import { View, StyleSheet, ViewProps } from "react-native";
-
-type ScreenProps = ViewProps & {
-  noPadding?: boolean;
-  noPaddingHorizontal?: boolean;
-  noPaddingTop?: boolean;
-};
+import { View, StyleSheet } from "react-native";
 
 export default function Screen({
   children,
@@ -13,7 +7,7 @@ export default function Screen({
   noPaddingHorizontal,
   noPaddingTop,
   ...rest
-}: ScreenProps) {
+}) {
 
   return (
     <View

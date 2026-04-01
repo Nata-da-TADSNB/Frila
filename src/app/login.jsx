@@ -2,10 +2,10 @@ import Background from "@/components/backgroundImage";
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View, } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
-        const router = useRouter();
+    const router = useRouter();
     
     return (
         <Background source={require("@/assets/img/ARTBACKGROUNDWHITE.png")}>
@@ -33,7 +33,9 @@ export default function Index() {
             </View>
         </Background>
     )
-}const styles = StyleSheet.create({
+}
+
+const styles = StyleSheet.create({
 
     container: {
         flex: 1,

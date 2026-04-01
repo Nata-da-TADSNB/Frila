@@ -16,25 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.28;
 const SWIPE_OUT_DURATION = 280;
 
-export type FreelancerItem = {
-  id: string;
-  imageFreelancer: any;
-  nome: string;
-  profissao: string;
-  descricao: string;
-  avaliacao: number;
-  preco: number;
-  onVerDetalhes?: () => void;
-};
-
-type CardProps = {
-  item: FreelancerItem;
-  isTop: boolean;
-  stackIndex: number;
-  onSwiped: () => void;
-};
-
-function FreelancerCard({ item, isTop, stackIndex, onSwiped }: CardProps) {
+function FreelancerCard({ item, isTop, stackIndex, onSwiped }) {
   const position = useRef(new Animated.ValueXY()).current;
 
   const rotate = position.x.interpolate({
@@ -43,7 +25,7 @@ function FreelancerCard({ item, isTop, stackIndex, onSwiped }: CardProps) {
     extrapolate: "clamp",
   });
 
-  const forceSwipe = (direction: "left" | "right") => {
+  const forceSwipe = (direction) => {
     const x = direction === "right" ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
     Animated.timing(position, {
       toValue: { x, y: 0 },
@@ -142,11 +124,7 @@ function FreelancerCard({ item, isTop, stackIndex, onSwiped }: CardProps) {
 }
 
 // ─── Stack ────────────────────────────────────────────────────────────────────
-type StackProps = {
-  freelancers: FreelancerItem[];
-};
-
-export function SwipeableFreelancerCard({ freelancers }: StackProps) {
+export function SwipeableFreelancerCard({ freelancers }) {
   const [cards, setCards] = useState(freelancers);
   const [swipeCount, setSwipeCount] = useState(0);
 

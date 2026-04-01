@@ -2,14 +2,11 @@ import { View, TextInput, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import colors from "@/constants/Colors";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
-
-type Props = {
-    placeholder?: string;
-};
-
-export function SearchInput({ placeholder }: Props) {
+export function SearchInput({ placeholder }) {
+    const router = useRouter();
+    
     return (
         <BlurView intensity={60} tint="light" style={styles.container} >
             <TextInput

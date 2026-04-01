@@ -66,11 +66,11 @@ const servicosData = [
     },
 ];
 
-export default function Index() {
+export default function Favoritos() {
     const router = useRouter();
-    const [likedServices, setLikedServices] = useState<number[]>([]);
+    const [likedServices, setLikedServices] = useState([1, 3, 5]);
 
-    const handleLikePress = (serviceId: number) => {
+    const handleLikePress = (serviceId) => {
         setLikedServices(prev => {
             if (prev.includes(serviceId)) {
                 return prev.filter(id => id !== serviceId);
@@ -79,6 +79,10 @@ export default function Index() {
             }
         });
     };
+
+    const favoriteServices = servicosData.filter(servico =>
+        likedServices.includes(servico.id)
+    );
 
     return (
         <View style={{ flex: 1 }}>
@@ -93,8 +97,8 @@ export default function Index() {
                         stickyHeaderIndices={[1]}
                     >
 
-                        <View>
-                            <Text style={styles.nameApp}>FRILA</Text>
+                        <View style={styles.headerContainer}>
+                            <Text style={styles.title}>Gostei</Text>
                         </View>
 
                         <View style={styles.inputContainer}>
@@ -102,25 +106,35 @@ export default function Index() {
                         </View>
 
                         <View style={styles.containerFilters}>
-                            <Text style={styles.textFilter}>Conheça os serviços</Text>
+                            <Text style={styles.textFilter}>Meus favoritos</Text>
                             <Ionicons name="filter" size={20} color={colors.cinza} />
                         </View>
 
-                        <View style={styles.containerServicos}>
-                            {servicosData.map((servico) => (
-                                <ServiceView
-                                    key={servico.id}
-                                    id={servico.id}
-                                    imageFreelancer={servico.imageFreelancer}
-                                    nome={servico.nome}
-                                    profissao={servico.profissao}
-                                    descricao={servico.descricao}
-                                    avaliacao={servico.avaliacao}
-                                    isLiked={likedServices.includes(servico.id)}
-                                    onLikePress={handleLikePress}
-                                />
-                            ))}
-                        </View>
+                        {favoriteServices.length > 0 ? (
+                            <View style={styles.containerServicos}>
+                                {favoriteServices.map((servico) => (
+                                    <ServiceView
+                                        key={servico.id}
+                                        id={servico.id}
+                                        imageFreelancer={servico.imageFreelancer}
+                                        nome={servico.nome}
+                                        profissao={servico.profissao}
+                                        descricao={servico.descricao}
+                                        avaliacao={servico.avaliacao}
+                                        isLiked={likedServices.includes(servico.id)}
+                                        onLikePress={handleLikePress}
+                                    />
+                                ))}
+                            </View>
+                        ) : (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="heart-outline" size={60} color={colors.cinza} />
+                                <Text style={styles.emptyText}>Nenhum serviço curtido ainda</Text>
+                                <Text style={styles.emptySubText}>
+                                    Toque no coração dos serviços que você gostar para vê-los aqui
+                                </Text>
+                            </View>
+                        )}
 
                     </ScrollView>
 
@@ -140,9 +154,15 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingBottom: 120
     },
-    nameApp: {
-        fontSize: 100,
+    headerContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 10,
+    },
+    title: {
+        fontSize: 48,
         fontFamily: "GotuRegular",
+        color: colors.preto,
     },
     inputContainer: {
         alignItems: "center",
@@ -153,6 +173,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         marginTop: 20,
+        marginBottom: 10,
     },
     textFilter: {
         fontFamily: "KohoLight",
@@ -164,5 +185,24 @@ const styles = StyleSheet.create({
         height: "100%",
         marginTop: 10,
         gap: 20
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 50,
+        gap: 15,
+    },
+    emptyText: {
+        fontFamily: "KohoMedium",
+        fontSize: 18,
+        color: colors.cinza,
+        textAlign: 'center',
+    },
+    emptySubText: {
+        fontFamily: "KohoLight",
+        fontSize: 14,
+        color: colors.cinza,
+        textAlign: 'center',
+        paddingHorizontal: 40,
     }
 });

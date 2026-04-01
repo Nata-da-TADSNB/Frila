@@ -6,8 +6,6 @@ import { useRef, useState } from "react";
 import {
   Dimensions,
   Image,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -15,8 +13,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
-type FeatherIconName = React.ComponentProps<typeof Feather>['name'];
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -33,9 +29,9 @@ const HERO_IMAGES = [
 export default function ProviderDetail() {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
-  const swiperRef = useRef<ScrollView>(null);
+  const swiperRef = useRef(null);
 
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = (e) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
     setActiveIndex(index);
   };
@@ -136,7 +132,7 @@ export default function ProviderDetail() {
             </View>
             <TouchableOpacity
               style={styles.negociarButton}
-              onPress={handleNegotiate} // Adiciona o evento de press
+              onPress={handleNegotiate}
             >
               <Text style={styles.negociarText}>NEGOCIAR</Text>
             </TouchableOpacity>
