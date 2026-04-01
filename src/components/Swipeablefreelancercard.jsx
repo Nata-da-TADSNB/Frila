@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -16,8 +16,18 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.28;
 const SWIPE_OUT_DURATION = 280;
 
-function FreelancerCard({ item, isTop, stackIndex, onSwiped }) {
+// ─── Card individual ──────────────────────────────────────────────────────────
+function FreelancerCard({ item, isTop, stackIndex, onSwiped, scrollRef }) {
   const position = useRef(new Animated.ValueXY()).current;
+  const isTopRef = useRef(isTop); // 🔑 ref que o panResponder consegue ler atualizado
+
+  // Mantém a ref sincronizada com a prop e reseta posição ao virar topo
+  useEffect(() => {
+    isTopRef.current = isTop;
+    if (isTop) {
+      position.setValue({ x: 0, y: 0 });
+    }
+  }, [isTop]);
 
   const rotate = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
@@ -31,33 +41,67 @@ function FreelancerCard({ item, isTop, stackIndex, onSwiped }) {
       toValue: { x, y: 0 },
       duration: SWIPE_OUT_DURATION,
       useNativeDriver: false,
-    }).start(onSwiped);
+    }).start(() => {
+      scrollRef?.current?.setNativeProps({ scrollEnabled: true });
+      onSwiped();
+    });
+  };
+
+  const resetPosition = () => {
+    Animated.spring(position, {
+      toValue: { x: 0, y: 0 },
+      friction: 6,
+      tension: 40,
+      useNativeDriver: false,
+    }).start();
   };
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => isTop,
-      onPanResponderMove: (_, gesture) => {
-        position.setValue({ x: gesture.dx, y: gesture.dy * 0.1 });
+      onStartShouldSetPanResponder: () => false,
+
+      onMoveShouldSetPanResponder: (_, gesture) => {
+        if (!isTopRef.current) return false; // 🔑 usa a ref, não a prop
+        const { dx, dy } = gesture;
+        const isHorizontal = Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 10;
+        if (isHorizontal) {
+          scrollRef?.current?.setNativeProps({ scrollEnabled: false });
+        }
+        return isHorizontal;
       },
+
+      onPanResponderGrant: () => {
+        position.setOffset({ x: position.x._value, y: 0 });
+        position.setValue({ x: 0, y: 0 });
+      },
+
+      onPanResponderMove: (_, gesture) => {
+        position.setValue({ x: gesture.dx, y: 0 });
+      },
+
       onPanResponderRelease: (_, gesture) => {
+        position.flattenOffset();
+        scrollRef?.current?.setNativeProps({ scrollEnabled: true });
+
         if (gesture.dx > SWIPE_THRESHOLD) {
           forceSwipe("right");
         } else if (gesture.dx < -SWIPE_THRESHOLD) {
           forceSwipe("left");
         } else {
-          Animated.spring(position, {
-            toValue: { x: 0, y: 0 },
-            friction: 5,
-            useNativeDriver: false,
-          }).start();
+          resetPosition();
         }
+      },
+
+      onPanResponderTerminate: () => {
+        position.flattenOffset();
+        scrollRef?.current?.setNativeProps({ scrollEnabled: true });
+        resetPosition();
       },
     })
   ).current;
 
-  const scale = 1 - stackIndex * 0.045;
-  const translateYOffset = stackIndex * 14;
+  const scale = 1 - stackIndex * 0.04;
+  const translateYOffset = stackIndex * 22;
 
   const animatedStyle = isTop
     ? {
@@ -124,16 +168,14 @@ function FreelancerCard({ item, isTop, stackIndex, onSwiped }) {
 }
 
 // ─── Stack ────────────────────────────────────────────────────────────────────
-export function SwipeableFreelancerCard({ freelancers }) {
+export function SwipeableFreelancerCard({ freelancers, scrollRef }) {
   const [cards, setCards] = useState(freelancers);
-  const [swipeCount, setSwipeCount] = useState(0);
 
   const handleSwiped = () => {
     setCards((prev) => {
       const [first, ...rest] = prev;
-      return [...rest, first]; // move o primeiro pro final
+      return [...rest, first]; // primeiro vai pro final
     });
-    setSwipeCount((c) => c + 1); // muda o key do topo → força remontagem → reseta posição
   };
 
   return (
@@ -142,20 +184,17 @@ export function SwipeableFreelancerCard({ freelancers }) {
         .slice(0, 3)
         .reverse()
         .map((item, reversedIndex) => {
-          const stackIndex = Math.min(cards.slice(0, 3).length - 1 - reversedIndex, 2);
+          const stackIndex = cards.slice(0, 3).length - 1 - reversedIndex;
           const isTop = stackIndex === 0;
-          // key com swipeCount garante que o card topo é remontado a cada swipe
-          // sem isso, React reutiliza o componente e a posição animada não reseta
-          const key = isTop
-            ? `top-${swipeCount}`
-            : `behind-${item.id}-${swipeCount}`;
+
           return (
             <FreelancerCard
-              key={key}
+              key={item.id} // key fixa no ID — card sobe naturalmente sem remontar
               item={item}
               isTop={isTop}
               stackIndex={stackIndex}
               onSwiped={handleSwiped}
+              scrollRef={scrollRef}
             />
           );
         })}
@@ -167,11 +206,10 @@ export function SwipeableFreelancerCard({ freelancers }) {
 const styles = StyleSheet.create({
   stackContainer: {
     width: "100%",
-    height: 460,
+    height: 500,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start", // ancora no topo → pontinha dos cards de trás aparece embaixo
   },
-
   card: {
     position: "absolute",
     width: "100%",
@@ -179,120 +217,37 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
     elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   },
-
-  imageContainer: {
-    width: "100%",
-    height: 250,
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
+  imageContainer: { width: "100%", height: 250 },
+  image: { width: "100%", height: "100%", resizeMode: "cover" },
   avaliacaoBadge: {
-    position: "absolute",
-    top: 12,
-    left: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    position: "absolute", top: 12, left: 12,
+    flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "rgba(0,0,0,0.55)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20,
   },
-  avaliacaoText: {
-    color: Colors.creme,
-    fontSize: 13,
-    fontFamily: "KohoMedium",
-  },
+  avaliacaoText: { color: Colors.creme, fontSize: 13, fontFamily: "KohoMedium" },
   favoritoBadge: {
-    position: "absolute",
-    top: 12,
-    right: 52,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    padding: 7,
-    borderRadius: 20,
+    position: "absolute", top: 12, right: 52,
+    backgroundColor: "rgba(0,0,0,0.55)", padding: 7, borderRadius: 20,
   },
   chatBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    padding: 7,
-    borderRadius: 20,
+    position: "absolute", top: 12, right: 12,
+    backgroundColor: "rgba(0,0,0,0.55)", padding: 7, borderRadius: 20,
   },
-
-  body: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  nome: {
-    color: Colors.creme,
-    fontSize: 22,
-    fontFamily: "KohoMedium",
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  profissao: {
-    color: Colors.dourado,
-    fontSize: 13,
-    fontFamily: "KohoMedium",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  descricao: {
-    color: Colors.bege,
-    fontSize: 13,
-    fontFamily: "KohoMedium",
-    lineHeight: 19,
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#2E2E2E",
-    marginHorizontal: 18,
-    marginBottom: 14,
-  },
-
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 18,
-    paddingBottom: 20,
-  },
-  profissaoFooter: {
-    color: Colors.dourado,
-    fontSize: 11,
-    fontFamily: "KohoMedium",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  preco: {
-    color: Colors.creme,
-    fontSize: 28,
-    fontFamily: "KohoMedium",
-  },
-  precoHora: {
-    fontSize: 13,
-    color: Colors.cinza,
-  },
-  botao: {
-    backgroundColor: Colors.creme,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 50,
-  },
-  botaoText: {
-    color: Colors.preto,
-    fontSize: 12,
-    fontFamily: "KohoMedium",
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
+  body: { paddingHorizontal: 18, paddingTop: 16, paddingBottom: 12 },
+  nome: { color: Colors.creme, fontSize: 22, fontFamily: "KohoMedium", letterSpacing: 0.5, marginBottom: 2 },
+  profissao: { color: Colors.dourado, fontSize: 13, fontFamily: "KohoMedium", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 },
+  descricao: { color: Colors.bege, fontSize: 13, fontFamily: "KohoMedium", lineHeight: 19 },
+  divider: { height: 1, backgroundColor: "#2E2E2E", marginHorizontal: 18, marginBottom: 14 },
+  footer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 18, paddingBottom: 20 },
+  profissaoFooter: { color: Colors.dourado, fontSize: 11, fontFamily: "KohoMedium", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 2 },
+  preco: { color: Colors.creme, fontSize: 28, fontFamily: "KohoMedium" },
+  precoHora: { fontSize: 13, color: Colors.cinza },
+  botao: { backgroundColor: Colors.creme, paddingVertical: 10, paddingHorizontal: 18, borderRadius: 50 },
+  botaoText: { color: Colors.preto, fontSize: 12, fontFamily: "KohoMedium", fontWeight: "800", letterSpacing: 0.8 },
 });

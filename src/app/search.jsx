@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { SearchInput } from "@/components/SearchInput";
 import {
     KeyboardAvoidingView,
@@ -15,24 +16,25 @@ import colors from "@/constants/Colors";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
 import { useRouter } from "expo-router";
 
-export default function Index() {
-
+export default function Search() {
     const router = useRouter();
+    const scrollRef = useRef(null); // 🔑 ref do ScrollView
 
     return (
         <View style={{ flex: 1 }}>
-
             <Screen style={styles.body}>
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
                     behavior={Platform.OS === "ios" ? "padding" : "height"}>
 
                     <ScrollView
+                        ref={scrollRef} // 🔑 anexa a ref
                         contentContainerStyle={styles.containerScroll}
                         showsVerticalScrollIndicator={false}
                         stickyHeaderIndices={[0]}
+                        scrollEventThrottle={16}
+                        directionalLockEnabled={true}
                     >
-
                         <View style={styles.inputContainer}>
                             <SearchInput placeholder="Buscar serviços..." />
                         </View>
@@ -43,13 +45,12 @@ export default function Index() {
                         </View>
 
                         <View style={styles.containerServicos}>
-
-
                             <SwipeableFreelancerCard
+                                scrollRef={scrollRef} // 🔑 passa a ref pro swiper
                                 freelancers={[
                                     {
                                         id: "1",
-                                        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
+                                        imageFreelancer: require("@/assets/img/HOMEM6.jpg"),
                                         nome: "Michel Oliveira",
                                         profissao: "UI/UX Designer",
                                         descricao: "Bla bla bla bla bla",
@@ -58,7 +59,7 @@ export default function Index() {
                                     },
                                     {
                                         id: "2",
-                                        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
+                                        imageFreelancer: require("@/assets/img/MULHER3.jpg"),
                                         nome: "Ana Carolina",
                                         profissao: "Mobile Developer",
                                         descricao: "Bla bla bla bla bla",
@@ -76,55 +77,42 @@ export default function Index() {
                                     },
                                 ]}
                             />
-
                         </View>
-
                     </ScrollView>
-
                 </KeyboardAvoidingView>
             </Screen>
-
             <Footer />
-
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
-
     body: {
         backgroundColor: colors.creme,
     },
-
     containerScroll: {
         flexGrow: 1,
         paddingBottom: 120
     },
-
-
     inputContainer: {
         alignItems: "center",
         width: "100%",
         backgroundColor: "transparent"
     },
-
     containerFilters: {
         flexDirection: "row",
         justifyContent: "space-between",
         marginTop: 20,
     },
-
     textFilter: {
         fontFamily: "KohoLight",
         fontSize: 18,
         color: colors.cinza,
     },
-
     containerServicos: {
         width: "100%",
         height: "100%",
         marginTop: 10,
         gap: 20
     }
-
 });
