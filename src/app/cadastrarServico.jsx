@@ -141,19 +141,37 @@ export default function AdicionarServico() {
         }
     };
 
-    const handleCriar = () => {
-        console.log({
-            fotos,
-            nome,
-            descricao,
-            tipoServico,
-            endereco: mostrarEndereco ? endereco : null,
-            valorMedio: valorNumerico,
-            valorTaxa,
-            valorReceber
-        });
-
-        setPopupSucessoVisible(true);
+    const handleCriar = async () => {
+        const dadosServico = {
+            id_prestador: 1,
+            titulo: nome,
+            descricao: descricao,
+            endereco: mostrarEndereco ? endereco : "Remoto/Digital",
+            preco: valorNumerico,
+            preco_total: valorReceber,
+            imagem: fotos[0] || null 
+        };
+    
+        try {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/servicos`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                 },
+                body: JSON.stringify(dadosServico),
+            });
+    
+            if (response.ok) {
+                setPopupSucessoVisible(true);
+            } else {
+                const erroReal = await response.text(); 
+                alert("Erro do Servidor: " + erroReal);
+            }
+        } catch (error) {
+            console.error("Erro de conexão:", error);
+            alert("Não foi possível conectar à API.");
+        }
     };
 
     const handleCancelar = () => {
