@@ -1,9 +1,12 @@
 import colors from "@/constants/Colors";
+import { createServico, getServicoById, initDatabase, updateServico } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from "expo-router";
-import React, { useState } from 'react';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from 'react';
 import {
+    Alert,
     Image,
     Modal,
     ScrollView,
@@ -14,7 +17,7 @@ import {
     View
 } from "react-native";
 
-function PopupSucesso({ visible, onClose }) {
+function PopupSucesso({ visible, onClose, modoEdicao }) {
     const router = useRouter();
 
     const handleOk = () => {
@@ -37,10 +40,14 @@ function PopupSucesso({ visible, onClose }) {
                         <Feather name="check-circle" size={50} color="#333333" />
                     </View>
 
-                    <Text style={styles.popupTitle}>SERVIÇO CRIADO!</Text>
+                    <Text style={styles.popupTitle}>
+                        {modoEdicao ? 'SERVIÇO ATUALIZADO!' : 'SERVIÇO CRIADO!'}
+                    </Text>
 
                     <Text style={styles.popupMessage}>
-                        Seu serviço foi criado com sucesso.
+                        {modoEdicao
+                            ? 'Seu serviço foi atualizado com sucesso.'
+                            : 'Seu serviço foi criado com sucesso.'}
                     </Text>
 
                     <TouchableOpacity
@@ -98,6 +105,10 @@ function PopupCancelar({ visible, onClose, onConfirm }) {
 
 export default function AdicionarServico() {
     const router = useRouter();
+    const { servicoId } = useLocalSearchParams();
+    const modoEdicao = !!servicoId;
+
+    const [idPrestador, setIdPrestador] = useState(1);
     const [fotos, setFotos] = useState([]);
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
@@ -112,6 +123,38 @@ export default function AdicionarServico() {
     const valorNumerico = parseFloat(valorMedio) || 0;
     const valorTaxa = valorNumerico * taxaPlataforma;
     const valorReceber = valorNumerico - valorTaxa;
+
+    useEffect(() => {
+        async function init() {
+            await initDatabase();
+            const id = await AsyncStorage.getItem('userId');
+            if (id) setIdPrestador(Number(id));
+
+            if (modoEdicao) {
+                try {
+                    const servico = await getServicoById(Number(servicoId));
+                    if (!servico) return;
+                    setNome(servico.titulo);
+                    setDescricao(servico.descricao || '');
+                    setValorMedio(String(servico.preco));
+                    if (servico.imagem) setFotos([servico.imagem]);
+
+                    const isPresencial = servico.endereco && servico.endereco !== 'Remoto/Digital';
+                    if (isPresencial) {
+                        setTipoServico('presencial');
+                        setEndereco(servico.endereco);
+                        setMostrarEndereco(true);
+                    } else {
+                        setTipoServico('digital');
+                        setMostrarEndereco(false);
+                    }
+                } catch (err) {
+                    console.error('Erro ao carregar serviço:', err);
+                }
+            }
+        }
+        init();
+    }, [servicoId]);
 
     const pickImage = async (index) => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -142,35 +185,44 @@ export default function AdicionarServico() {
     };
 
     const handleCriar = async () => {
-        const dadosServico = {
-            id_prestador: 1,
-            titulo: nome,
-            descricao: descricao,
-            endereco: mostrarEndereco ? endereco : "Remoto/Digital",
-            preco: valorNumerico,
-            preco_total: valorReceber,
-            imagem: fotos[0] || null 
-        };
-    
+        if (!nome.trim()) {
+            Alert.alert('Atenção', 'O nome do serviço é obrigatório.');
+            return;
+        }
+        if (!valorNumerico || valorNumerico <= 0) {
+            Alert.alert('Atenção', 'Informe um valor válido para o serviço.');
+            return;
+        }
+
+        const enderecoFinal = mostrarEndereco ? endereco : 'Remoto/Digital';
+        const imagemFinal = fotos[0] || null;
+
         try {
-            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/servicos`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Bypass-Tunnel-Reminder': 'true'
-                 },
-                body: JSON.stringify(dadosServico),
-            });
-    
-            if (response.ok) {
-                setPopupSucessoVisible(true);
+            if (modoEdicao) {
+                await updateServico(
+                    Number(servicoId),
+                    nome.trim(),
+                    descricao.trim(),
+                    enderecoFinal,
+                    valorNumerico,
+                    valorReceber,
+                    imagemFinal
+                );
             } else {
-                const erroReal = await response.text(); 
-                alert("Erro do Servidor: " + erroReal);
+                await createServico(
+                    idPrestador,
+                    nome.trim(),
+                    descricao.trim(),
+                    enderecoFinal,
+                    valorNumerico,
+                    valorReceber,
+                    imagemFinal
+                );
             }
+            setPopupSucessoVisible(true);
         } catch (error) {
-            console.error("Erro de conexão:", error);
-            alert("Não foi possível conectar à API.");
+            console.error('Erro ao salvar serviço:', error);
+            Alert.alert('Erro', 'Não foi possível salvar o serviço.');
         }
     };
 
@@ -195,7 +247,9 @@ export default function AdicionarServico() {
                 contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.titulo}>ADICIONAR SERVIÇO</Text>
+                <Text style={styles.titulo}>
+                    {modoEdicao ? 'EDITAR SERVIÇO' : 'ADICIONAR SERVIÇO'}
+                </Text>
 
                 <View style={styles.fotosContainer}>
                     {[0, 1, 2].map((index) => (
@@ -369,7 +423,9 @@ export default function AdicionarServico() {
                         onPress={handleCriar}
                         activeOpacity={0.8}
                     >
-                        <Text style={styles.botaoCriarText}>CRIAR</Text>
+                        <Text style={styles.botaoCriarText}>
+                            {modoEdicao ? 'SALVAR' : 'CRIAR'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -377,6 +433,7 @@ export default function AdicionarServico() {
             <PopupSucesso
                 visible={popupSucessoVisible}
                 onClose={handleFecharPopup}
+                modoEdicao={modoEdicao}
             />
 
             <PopupCancelar

@@ -1,7 +1,10 @@
 import { Footer } from "@/components/footerFreelancer";
 import colors from "@/constants/Colors";
+import { deleteServico, getAllServicos, initDatabase } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
-import { useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from 'react';
 import {
     Alert,
     Image,
@@ -57,7 +60,7 @@ function PopupExcluirServico({ visible, onClose, onConfirm, nomeServico }) {
     );
 }
 
-function CardMeuServico({ servico, onExcluir }) {
+function CardMeuServico({ servico, onExcluir, onEditar }) {
     const getTipoIcon = () => {
         switch (servico.tipo) {
             case 'digital': return 'monitor';
@@ -90,12 +93,21 @@ function CardMeuServico({ servico, onExcluir }) {
                 <Text style={styles.tipoBadgeText}>{getTipoLabel()}</Text>
             </View>
 
-            <TouchableOpacity
-                style={styles.excluirButton}
-                onPress={() => onExcluir(servico.id)}
-            >
-                <Feather name="trash-2" size={22} color="#8B6B4F" />
-            </TouchableOpacity>
+            <View style={styles.acoesBotoes}>
+                <TouchableOpacity
+                    style={styles.editarButton}
+                    onPress={() => onEditar(servico.id)}
+                >
+                    <Feather name="edit-2" size={18} color="#8B6B4F" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={styles.excluirButton}
+                    onPress={() => onExcluir(servico.id)}
+                >
+                    <Feather name="trash-2" size={22} color="#8B6B4F" />
+                </TouchableOpacity>
+            </View>
 
             <ScrollView
                 horizontal
@@ -144,37 +156,40 @@ function CardMeuServico({ servico, onExcluir }) {
 // -------------------- MAIN COMPONENT -------------------- //
 
 export default function MeusServicos() {
-    const [servicos, setServicos] = useState([
-        {
-            id: '1',
-            nome: 'Design de Logotipos',
-            descricao: 'Criação de logotipos profissionais e personalizados para sua marca...',
-            tipo: 'digital',
-            valor: 150.00,
-            fotos: [''],
-        },
-        {
-            id: '2',
-            nome: 'Aulas de Violão',
-            descricao: 'Aulas presenciais de violão para iniciantes e intermediários...',
-            tipo: 'presencial',
-            valor: 80.00,
-            fotos: ['', ''],
-            endereco: 'Rua das Flores, 123 - Centro'
-        },
-        {
-            id: '3',
-            nome: 'Entrega de Comida',
-            descricao: 'Entrega de refeições caseiras saudáveis...',
-            tipo: 'delivery',
-            valor: 25.00,
-            fotos: [''],
-            endereco: 'Delivery em toda cidade'
-        }
-    ]);
-
+    const router = useRouter();
+    const [servicos, setServicos] = useState([]);
     const [popupExcluirVisible, setPopupExcluirVisible] = useState(false);
     const [servicoSelecionado, setServicoSelecionado] = useState(null);
+
+    const carregarServicos = useCallback(async () => {
+        try {
+            await initDatabase();
+            const userId = await AsyncStorage.getItem('userId');
+            const idPrestador = userId ? Number(userId) : 1;
+            const rows = await getAllServicos(idPrestador);
+
+            const mapped = rows.map(row => ({
+                id: row.id_servico,
+                nome: row.titulo,
+                descricao: row.descricao || '',
+                endereco: row.endereco !== 'Remoto/Digital' ? row.endereco : null,
+                tipo: !row.endereco || row.endereco === 'Remoto/Digital' ? 'digital' : 'presencial',
+                valor: row.preco,
+                fotos: row.imagem ? [row.imagem] : [],
+            }));
+
+            setServicos(mapped);
+        } catch (error) {
+            console.error('Erro ao carregar serviços:', error);
+            Alert.alert('Erro', 'Não foi possível carregar os serviços.');
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            carregarServicos();
+        }, [carregarServicos])
+    );
 
     const handleExcluir = (id) => {
         const servico = servicos.find(s => s.id === id);
@@ -184,14 +199,22 @@ export default function MeusServicos() {
         }
     };
 
-    const confirmarExclusao = () => {
-        if (servicoSelecionado) {
-            setServicos(servicos.filter(s => s.id !== servicoSelecionado.id));
+    const confirmarExclusao = async () => {
+        if (!servicoSelecionado) return;
+        try {
+            await deleteServico(servicoSelecionado.id);
             setPopupExcluirVisible(false);
             setServicoSelecionado(null);
-
             Alert.alert('Sucesso', 'Serviço excluído com sucesso!');
+            await carregarServicos();
+        } catch (error) {
+            console.error('Erro ao excluir serviço:', error);
+            Alert.alert('Erro', 'Não foi possível excluir o serviço.');
         }
+    };
+
+    const handleEditar = (id) => {
+        router.push({ pathname: '/cadastrarServico', params: { servicoId: id } });
     };
 
     return (
@@ -217,6 +240,7 @@ export default function MeusServicos() {
                             key={servico.id}
                             servico={servico}
                             onExcluir={handleExcluir}
+                            onEditar={handleEditar}
                         />
                     ))
                 )}
@@ -292,11 +316,28 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
-    excluirButton: {
+    acoesBotoes: {
         position: 'absolute',
         top: 10,
         right: 10,
         zIndex: 10,
+        flexDirection: 'row',
+        gap: 8,
+    },
+    editarButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+    excluirButton: {
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
         width: 40,
         height: 40,

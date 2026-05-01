@@ -1,12 +1,40 @@
 import Background from "@/components/backgroundImage";
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
+import { initDatabase, getUserByEmailAndSenha } from "@/database/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
     const router = useRouter();
-    
+    const [email, setEmail] = useState('');
+    const [senha, setSenha] = useState('');
+
+    useEffect(() => {
+        initDatabase().catch(err => console.error('DB init error:', err));
+    }, []);
+
+    const handleLogin = async () => {
+        if (!email.trim() || !senha.trim()) {
+            Alert.alert('Atenção', 'Preencha e-mail e senha.');
+            return;
+        }
+        try {
+            const user = await getUserByEmailAndSenha(email.trim(), senha.trim());
+            if (user) {
+                await AsyncStorage.setItem('userId', String(user.id_usuario));
+                router.push("/home");
+            } else {
+                Alert.alert('Erro', 'E-mail ou senha inválidos.');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            Alert.alert('Erro', 'Não foi possível realizar o login.');
+        }
+    };
+
     return (
         <Background source={require("@/assets/img/ARTBACKGROUNDWHITE.png")}>
             <View style={styles.container}>
@@ -17,13 +45,22 @@ export default function Index() {
 
                 <View style={styles.forms}>
                     <Text style={styles.inputText}>E-mail</Text>
-                    <Input />
+                    <Input
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                    />
                     <Text style={styles.inputText}>Senha</Text>
-                    <Input />
+                    <Input
+                        value={senha}
+                        onChangeText={setSenha}
+                        secureTextEntry
+                    />
 
                     <Text style={styles.redefinir}>Esqueceu sua senha? <Text style={styles.link}>Redefina aqui</Text></Text>
 
-                    <Pressable style={styles.button} onPress={() => router.push("/home")}>
+                    <Pressable style={styles.button} onPress={handleLogin}>
                         <Text style={styles.buttonText}>ENTRAR</Text>
                     </Pressable>
 
@@ -32,7 +69,7 @@ export default function Index() {
 
             </View>
         </Background>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
