@@ -168,15 +168,28 @@ export default function MeusServicos() {
             const idPrestador = userId ? Number(userId) : 1;
             const rows = await getAllServicos(idPrestador);
 
-            const mapped = rows.map(row => ({
-                id: row.id_servico,
-                nome: row.titulo,
-                descricao: row.descricao || '',
-                endereco: row.endereco !== 'Remoto/Digital' ? row.endereco : null,
-                tipo: !row.endereco || row.endereco === 'Remoto/Digital' ? 'digital' : 'presencial',
-                valor: row.preco,
-                fotos: row.imagem ? [row.imagem] : [],
-            }));
+            const mapped = rows.map(row => {
+                const isDigital = !row.endereco || row.endereco === 'Remoto/Digital';
+
+                // Extrai "Cidade/UF - CEP: XXXXXXXX" do formato salvo pelo ViaCEP
+                let enderecoExibicao = null;
+                if (!isDigital) {
+                    const match = row.endereco.match(/,\s*(.*?)\/(.*?)\s*-\s*CEP:\s*(.*)$/);
+                    enderecoExibicao = match
+                        ? `${match[1].trim()}/${match[2].trim()} — CEP ${match[3].trim()}`
+                        : row.endereco; // fallback: endereço antigo (campo único)
+                }
+
+                return {
+                    id:       row.id_servico,
+                    nome:     row.titulo,
+                    descricao: row.descricao || '',
+                    endereco: enderecoExibicao,
+                    tipo:     isDigital ? 'digital' : 'presencial',
+                    valor:    row.preco,
+                    fotos:    row.imagem ? [row.imagem] : [],
+                };
+            });
 
             setServicos(mapped);
         } catch (error) {

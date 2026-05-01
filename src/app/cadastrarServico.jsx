@@ -6,6 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from 'react';
 import {
+    ActivityIndicator,
     Alert,
     Image,
     Modal,
@@ -17,43 +18,69 @@ import {
     View
 } from "react-native";
 
+// ---------- helpers ----------
+
+function parseEndereco(enderecoStr) {
+    // Formato salvo: "Logradouro, Numero - Bairro, Cidade/UF - CEP: 00000000"
+    const match = enderecoStr.match(/^(.*?),\s*(.*?)\s*-\s*(.*?),\s*(.*?)\/(.*?)\s*-\s*CEP:\s*(.*)$/);
+    if (match) {
+        return {
+            logradouro: match[1].trim(),
+            numero:     match[2].trim(),
+            bairro:     match[3].trim(),
+            cidade:     match[4].trim(),
+            estado:     match[5].trim(),
+            cep:        match[6].trim(),
+        };
+    }
+    // Formato antigo (campo único) — coloca tudo no logradouro
+    return { logradouro: enderecoStr, numero: '', bairro: '', cidade: '', estado: '', cep: '' };
+}
+
+async function sincronizarBanco(dadosServico) {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+    if (!apiUrl) return; // frila-api não configurado, ignora silenciosamente
+
+    try {
+        await fetch(`${apiUrl}/servicos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Bypass-Tunnel-Reminder': 'true',
+            },
+            body: JSON.stringify(dadosServico),
+        });
+    } catch {
+        // Servidor offline ou fora da rede — falha silenciosa, SQLite já salvou
+    }
+}
+
+// ---------- modals ----------
+
 function PopupSucesso({ visible, onClose, modoEdicao }) {
     const router = useRouter();
 
     const handleOk = () => {
         onClose();
-        setTimeout(() => {
-            router.replace("/dashboard");
-        }, 100);
+        setTimeout(() => router.replace("/dashboard"), 100);
     };
 
     return (
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={visible}
-            onRequestClose={handleOk}
-        >
+        <Modal animationType="fade" transparent visible={visible} onRequestClose={handleOk}>
             <View style={styles.popupOverlay}>
                 <View style={styles.popupContainer}>
                     <View style={styles.popupIconContainer}>
                         <Feather name="check-circle" size={50} color="#333333" />
                     </View>
-
                     <Text style={styles.popupTitle}>
                         {modoEdicao ? 'SERVIÇO ATUALIZADO!' : 'SERVIÇO CRIADO!'}
                     </Text>
-
                     <Text style={styles.popupMessage}>
                         {modoEdicao
                             ? 'Seu serviço foi atualizado com sucesso.'
                             : 'Seu serviço foi criado com sucesso.'}
                     </Text>
-
-                    <TouchableOpacity
-                        style={[styles.popupButton, styles.popupButtonConfirm]}
-                        onPress={handleOk}
-                    >
+                    <TouchableOpacity style={[styles.popupButton, styles.popupButtonConfirm]} onPress={handleOk}>
                         <Text style={styles.popupButtonConfirmText}>OK</Text>
                     </TouchableOpacity>
                 </View>
@@ -64,36 +91,21 @@ function PopupSucesso({ visible, onClose, modoEdicao }) {
 
 function PopupCancelar({ visible, onClose, onConfirm }) {
     return (
-        <Modal
-            animationType="fade"
-            transparent={true}
-            visible={visible}
-            onRequestClose={onClose}
-        >
+        <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
             <View style={styles.popupOverlay}>
                 <View style={styles.popupContainer}>
                     <View style={styles.popupIconContainer}>
                         <Feather name="x-circle" size={50} color="#999999" />
                     </View>
-
                     <Text style={styles.popupTitle}>CANCELAR SERVIÇO</Text>
-
                     <Text style={styles.popupMessage}>
                         Tem certeza que deseja cancelar? As informações não serão salvas.
                     </Text>
-
                     <View style={styles.popupButtonsContainer}>
-                        <TouchableOpacity
-                            style={[styles.popupButton, styles.popupButtonCancel]}
-                            onPress={onClose}
-                        >
+                        <TouchableOpacity style={[styles.popupButton, styles.popupButtonCancel]} onPress={onClose}>
                             <Text style={styles.popupButtonCancelText}>NÃO</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={[styles.popupButton, styles.popupButtonConfirm]}
-                            onPress={onConfirm}
-                        >
+                        <TouchableOpacity style={[styles.popupButton, styles.popupButtonConfirm]} onPress={onConfirm}>
                             <Text style={styles.popupButtonConfirmText}>SIM</Text>
                         </TouchableOpacity>
                     </View>
@@ -103,19 +115,40 @@ function PopupCancelar({ visible, onClose, onConfirm }) {
     );
 }
 
+// ---------- main screen ----------
+
 export default function AdicionarServico() {
     const router = useRouter();
     const { servicoId } = useLocalSearchParams();
     const modoEdicao = !!servicoId;
 
+    // auth
     const [idPrestador, setIdPrestador] = useState(1);
+
+    // fotos
     const [fotos, setFotos] = useState([]);
+
+    // dados básicos
     const [nome, setNome] = useState('');
     const [descricao, setDescricao] = useState('');
+
+    // tipo de serviço
     const [tipoServico, setTipoServico] = useState(null);
-    const [endereco, setEndereco] = useState('');
-    const [valorMedio, setValorMedio] = useState('100');
     const [mostrarEndereco, setMostrarEndereco] = useState(false);
+
+    // endereço (ViaCEP)
+    const [cep, setCep] = useState('');
+    const [logradouro, setLogradouro] = useState('');
+    const [numero, setNumero] = useState('');
+    const [bairro, setBairro] = useState('');
+    const [cidade, setCidade] = useState('');
+    const [estado, setEstado] = useState('');
+    const [buscandoCep, setBuscandoCep] = useState(false);
+
+    // valor
+    const [valorMedio, setValorMedio] = useState('100');
+
+    // modais
     const [popupSucessoVisible, setPopupSucessoVisible] = useState(false);
     const [popupCancelarVisible, setPopupCancelarVisible] = useState(false);
 
@@ -123,6 +156,8 @@ export default function AdicionarServico() {
     const valorNumerico = parseFloat(valorMedio) || 0;
     const valorTaxa = valorNumerico * taxaPlataforma;
     const valorReceber = valorNumerico - valorTaxa;
+
+    // ---------- init ----------
 
     useEffect(() => {
         async function init() {
@@ -142,8 +177,14 @@ export default function AdicionarServico() {
                     const isPresencial = servico.endereco && servico.endereco !== 'Remoto/Digital';
                     if (isPresencial) {
                         setTipoServico('presencial');
-                        setEndereco(servico.endereco);
                         setMostrarEndereco(true);
+                        const parsed = parseEndereco(servico.endereco);
+                        setCep(parsed.cep);
+                        setLogradouro(parsed.logradouro);
+                        setNumero(parsed.numero);
+                        setBairro(parsed.bairro);
+                        setCidade(parsed.cidade);
+                        setEstado(parsed.estado);
                     } else {
                         setTipoServico('digital');
                         setMostrarEndereco(false);
@@ -156,6 +197,35 @@ export default function AdicionarServico() {
         init();
     }, [servicoId]);
 
+    // ---------- ViaCEP ----------
+
+    const buscarCep = async (cepDigitado) => {
+        const cepLimpo = cepDigitado.replace(/\D/g, '');
+        setCep(cepDigitado);
+
+        if (cepLimpo.length !== 8) return;
+
+        setBuscandoCep(true);
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+            const data = await response.json();
+            if (data.erro) {
+                Alert.alert('CEP não encontrado', 'Verifique o CEP digitado e tente novamente.');
+                return;
+            }
+            setLogradouro(data.logradouro || '');
+            setBairro(data.bairro || '');
+            setCidade(data.localidade || '');
+            setEstado(data.uf || '');
+        } catch (err) {
+            Alert.alert('Erro', 'Não foi possível buscar o CEP. Verifique sua conexão.');
+        } finally {
+            setBuscandoCep(false);
+        }
+    };
+
+    // ---------- fotos ----------
+
     const pickImage = async (index) => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -163,8 +233,7 @@ export default function AdicionarServico() {
             aspect: [4, 3],
             quality: 1,
         });
-
-        if (!result.canceled && result.assets && result.assets[0]) {
+        if (!result.canceled && result.assets?.[0]) {
             const novasFotos = [...fotos];
             novasFotos[index] = result.assets[0].uri;
             setFotos(novasFotos);
@@ -172,17 +241,21 @@ export default function AdicionarServico() {
     };
 
     const removerFoto = (index) => {
-        const novasFotos = fotos.filter((_, i) => i !== index);
-        setFotos(novasFotos);
+        setFotos(fotos.filter((_, i) => i !== index));
     };
+
+    // ---------- tipo de serviço ----------
 
     const selecionarTipoServico = (tipo) => {
         setTipoServico(tipo);
         setMostrarEndereco(tipo === 'presencial' || tipo === 'delivery');
         if (tipo === 'digital') {
-            setEndereco('');
+            setCep(''); setLogradouro(''); setNumero('');
+            setBairro(''); setCidade(''); setEstado('');
         }
     };
+
+    // ---------- salvar ----------
 
     const handleCriar = async () => {
         if (!nome.trim()) {
@@ -194,31 +267,49 @@ export default function AdicionarServico() {
             return;
         }
 
-        const enderecoFinal = mostrarEndereco ? endereco : 'Remoto/Digital';
+        const enderecoFinal = mostrarEndereco
+            ? `${logradouro}, ${numero} - ${bairro}, ${cidade}/${estado} - CEP: ${cep.replace(/\D/g, '')}`
+            : 'Remoto/Digital';
+
         const imagemFinal = fotos[0] || null;
 
         try {
+            let idServico;
+
             if (modoEdicao) {
                 await updateServico(
                     Number(servicoId),
-                    nome.trim(),
-                    descricao.trim(),
-                    enderecoFinal,
-                    valorNumerico,
-                    valorReceber,
-                    imagemFinal
+                    nome.trim(), descricao.trim(),
+                    enderecoFinal, valorNumerico, valorReceber, imagemFinal
                 );
+                idServico = Number(servicoId);
             } else {
-                await createServico(
+                idServico = await createServico(
                     idPrestador,
-                    nome.trim(),
-                    descricao.trim(),
-                    enderecoFinal,
-                    valorNumerico,
-                    valorReceber,
-                    imagemFinal
+                    nome.trim(), descricao.trim(),
+                    enderecoFinal, valorNumerico, valorReceber, imagemFinal
                 );
             }
+
+            // Sincronizar com frila-api/banco.sqlite (falha silenciosa se offline)
+            sincronizarBanco({
+                id_servico:      idServico,
+                id_prestador:    idPrestador,
+                titulo:          nome.trim(),
+                descricao:       descricao.trim(),
+                cep:             cep.replace(/\D/g, ''),
+                logradouro,
+                numero,
+                bairro,
+                cidade,
+                estado,
+                endereco_completo: enderecoFinal,
+                preco:           valorNumerico,
+                preco_total:     valorReceber,
+                imagem:          imagemFinal,
+                salvo_em:        new Date().toISOString(),
+            });
+
             setPopupSucessoVisible(true);
         } catch (error) {
             console.error('Erro ao salvar serviço:', error);
@@ -226,9 +317,7 @@ export default function AdicionarServico() {
         }
     };
 
-    const handleCancelar = () => {
-        setPopupCancelarVisible(true);
-    };
+    const handleCancelar = () => setPopupCancelarVisible(true);
 
     const confirmarCancelar = () => {
         setPopupCancelarVisible(false);
@@ -239,6 +328,8 @@ export default function AdicionarServico() {
         setPopupSucessoVisible(false);
         router.replace("/dashboard");
     };
+
+    // ---------- render ----------
 
     return (
         <>
@@ -251,20 +342,14 @@ export default function AdicionarServico() {
                     {modoEdicao ? 'EDITAR SERVIÇO' : 'ADICIONAR SERVIÇO'}
                 </Text>
 
+                {/* FOTOS */}
                 <View style={styles.fotosContainer}>
                     {[0, 1, 2].map((index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={styles.fotoBox}
-                            onPress={() => pickImage(index)}
-                        >
+                        <TouchableOpacity key={index} style={styles.fotoBox} onPress={() => pickImage(index)}>
                             {fotos[index] ? (
                                 <View style={styles.fotoWrapper}>
                                     <Image source={{ uri: fotos[index] }} style={styles.foto} />
-                                    <TouchableOpacity
-                                        style={styles.removerFoto}
-                                        onPress={() => removerFoto(index)}
-                                    >
+                                    <TouchableOpacity style={styles.removerFoto} onPress={() => removerFoto(index)}>
                                         <Feather name="x" size={20} color="#FFFFFF" />
                                     </TouchableOpacity>
                                 </View>
@@ -275,6 +360,7 @@ export default function AdicionarServico() {
                     ))}
                 </View>
 
+                {/* NOME E DESCRIÇÃO */}
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
@@ -283,7 +369,6 @@ export default function AdicionarServico() {
                         value={nome}
                         onChangeText={setNome}
                     />
-
                     <TextInput
                         style={[styles.input, styles.textArea]}
                         placeholder="Descrição"
@@ -296,80 +381,101 @@ export default function AdicionarServico() {
                     />
                 </View>
 
+                {/* TIPO DE SERVIÇO */}
                 <View style={styles.tipoContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.tipoButton,
-                            tipoServico === 'digital' && styles.tipoButtonAtivo
-                        ]}
-                        onPress={() => selecionarTipoServico('digital')}
-                    >
-                        <Feather
-                            name="monitor"
-                            size={24}
-                            color={tipoServico === 'digital' ? '#333333' : '#999999'}
-                        />
-                        <Text style={[
-                            styles.tipoText,
-                            tipoServico === 'digital' && styles.tipoTextAtivo
-                        ]}>
-                            Digital
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.tipoButton,
-                            tipoServico === 'presencial' && styles.tipoButtonAtivo
-                        ]}
-                        onPress={() => selecionarTipoServico('presencial')}
-                    >
-                        <Feather
-                            name="map-pin"
-                            size={24}
-                            color={tipoServico === 'presencial' ? '#333333' : '#999999'}
-                        />
-                        <Text style={[
-                            styles.tipoText,
-                            tipoServico === 'presencial' && styles.tipoTextAtivo
-                        ]}>
-                            Presencial
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.tipoButton,
-                            tipoServico === 'delivery' && styles.tipoButtonAtivo
-                        ]}
-                        onPress={() => selecionarTipoServico('delivery')}
-                    >
-                        <Feather
-                            name="truck"
-                            size={24}
-                            color={tipoServico === 'delivery' ? '#333333' : '#999999'}
-                        />
-                        <Text style={[
-                            styles.tipoText,
-                            tipoServico === 'delivery' && styles.tipoTextAtivo
-                        ]}>
-                            Delivery
-                        </Text>
-                    </TouchableOpacity>
+                    {[
+                        { key: 'digital',    icon: 'monitor',  label: 'Digital'    },
+                        { key: 'presencial', icon: 'map-pin',  label: 'Presencial' },
+                        { key: 'delivery',   icon: 'truck',    label: 'Delivery'   },
+                    ].map(({ key, icon, label }) => (
+                        <TouchableOpacity
+                            key={key}
+                            style={[styles.tipoButton, tipoServico === key && styles.tipoButtonAtivo]}
+                            onPress={() => selecionarTipoServico(key)}
+                        >
+                            <Feather name={icon} size={24} color={tipoServico === key ? '#333333' : '#999999'} />
+                            <Text style={[styles.tipoText, tipoServico === key && styles.tipoTextAtivo]}>
+                                {label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
 
+                {/* ENDEREÇO (ViaCEP) */}
                 {mostrarEndereco && (
                     <View style={styles.enderecoContainer}>
+
+                        {/* CEP */}
+                        <View style={styles.cepRow}>
+                            <TextInput
+                                style={[styles.input, styles.cepInput]}
+                                placeholder="CEP (somente números)"
+                                placeholderTextColor="#999999"
+                                keyboardType="numeric"
+                                maxLength={8}
+                                value={cep}
+                                onChangeText={buscarCep}
+                            />
+                            {buscandoCep && (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={colors.marrom}
+                                    style={styles.cepLoader}
+                                />
+                            )}
+                        </View>
+
+                        {/* Logradouro */}
                         <TextInput
                             style={styles.input}
-                            placeholder="Endereço completo"
+                            placeholder="Logradouro"
                             placeholderTextColor="#999999"
-                            value={endereco}
-                            onChangeText={setEndereco}
+                            value={logradouro}
+                            onChangeText={setLogradouro}
                         />
+
+                        {/* Número */}
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Número"
+                            placeholderTextColor="#999999"
+                            keyboardType="numeric"
+                            value={numero}
+                            onChangeText={setNumero}
+                        />
+
+                        {/* Bairro */}
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Bairro"
+                            placeholderTextColor="#999999"
+                            value={bairro}
+                            onChangeText={setBairro}
+                        />
+
+                        {/* Cidade + Estado */}
+                        <View style={styles.cidadeRow}>
+                            <TextInput
+                                style={[styles.input, styles.cidadeInput]}
+                                placeholder="Cidade"
+                                placeholderTextColor="#999999"
+                                value={cidade}
+                                onChangeText={setCidade}
+                            />
+                            <TextInput
+                                style={[styles.input, styles.estadoInput]}
+                                placeholder="UF"
+                                placeholderTextColor="#999999"
+                                maxLength={2}
+                                autoCapitalize="characters"
+                                value={estado}
+                                onChangeText={setEstado}
+                            />
+                        </View>
                     </View>
                 )}
 
+                {/* VALOR */}
                 <View style={styles.valorContainer}>
                     <Text style={styles.valorLabel}>Valor médio do serviço:</Text>
 
@@ -396,12 +502,10 @@ export default function AdicionarServico() {
                             <Text style={styles.calculoLabel}>Valor total a receber:</Text>
                             <Text style={styles.calculoValor}>R$ {valorNumerico.toFixed(2)}</Text>
                         </View>
-
                         <View style={styles.calculoLinha}>
                             <Text style={styles.calculoLabel}>Taxa da plataforma (10%):</Text>
                             <Text style={styles.calculoValorTaxa}>- R$ {valorTaxa.toFixed(2)}</Text>
                         </View>
-
                         <View style={[styles.calculoLinha, styles.totalLinha]}>
                             <Text style={styles.totalLabel}>Você receberá:</Text>
                             <Text style={styles.totalValor}>R$ {valorReceber.toFixed(2)}</Text>
@@ -409,33 +513,18 @@ export default function AdicionarServico() {
                     </View>
                 </View>
 
+                {/* BOTÕES */}
                 <View style={styles.botoesContainer}>
-                    <TouchableOpacity
-                        style={styles.botaoCancelar}
-                        onPress={handleCancelar}
-                        activeOpacity={0.8}
-                    >
+                    <TouchableOpacity style={styles.botaoCancelar} onPress={handleCancelar} activeOpacity={0.8}>
                         <Text style={styles.botaoCancelarText}>CANCELAR</Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.botaoCriar}
-                        onPress={handleCriar}
-                        activeOpacity={0.8}
-                    >
-                        <Text style={styles.botaoCriarText}>
-                            {modoEdicao ? 'SALVAR' : 'CRIAR'}
-                        </Text>
+                    <TouchableOpacity style={styles.botaoCriar} onPress={handleCriar} activeOpacity={0.8}>
+                        <Text style={styles.botaoCriarText}>{modoEdicao ? 'SALVAR' : 'CRIAR'}</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
 
-            <PopupSucesso
-                visible={popupSucessoVisible}
-                onClose={handleFecharPopup}
-                modoEdicao={modoEdicao}
-            />
-
+            <PopupSucesso visible={popupSucessoVisible} onClose={handleFecharPopup} modoEdicao={modoEdicao} />
             <PopupCancelar
                 visible={popupCancelarVisible}
                 onClose={() => setPopupCancelarVisible(false)}
@@ -444,6 +533,8 @@ export default function AdicionarServico() {
         </>
     );
 }
+
+// ---------- styles ----------
 
 const styles = StyleSheet.create({
     container: {
@@ -546,7 +637,30 @@ const styles = StyleSheet.create({
         color: '#333333',
     },
     enderecoContainer: {
+        gap: 12,
         marginBottom: 30,
+    },
+    cepRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    cepInput: {
+        flex: 1,
+    },
+    cepLoader: {
+        marginLeft: 4,
+    },
+    cidadeRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    cidadeInput: {
+        flex: 3,
+    },
+    estadoInput: {
+        flex: 1,
+        textAlign: 'center',
     },
     valorContainer: {
         backgroundColor: '#FFFFFF',
