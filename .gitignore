@@ -43,3 +43,6 @@ yarn-error.*
 # variaveis de ambiente
 .env
 .env.local
+
+# IDE JetBrains (IntelliJ, Android Studio, WebStorm)
+../.idea/

@@ -1,43 +1,118 @@
 import Colors from "@/constants/Colors";
+import { getUserById, updateUser, updateUserPassword } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from 'expo-router';
-import { useState } from "react";
-import { Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Image, Modal, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
-export default function Index() {
+const formatCpfDisplay = (cpf) => {
+    if (!cpf) return '';
+    const d = cpf.replace(/\D/g, '');
+    return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+const formatTelDisplay = (tel) => {
+    if (!tel) return '';
+    const d = tel.replace(/\D/g, '');
+    if (d.length === 11) return d.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    if (d.length === 10) return d.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    return d;
+};
+
+const formatTelInput = (value) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 10) {
+        return digits
+            .replace(/(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    return digits
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2');
+};
+
+export default function EditarPerfil() {
     const router = useRouter();
 
-    const [nome, setNome] = useState("Andrey Alves");
-    const [telefone, setTelefone] = useState("(11) 98765-4321");
-    const [editandoNome, setEditandoNome] = useState(false);
-    const [editandoTelefone, setEditandoTelefone] = useState(false);
+    const [userId, setUserId] = useState(null);
+    const [nome, setNome] = useState('');
+    const [email, setEmail] = useState('');
+    const [cpf, setCpf] = useState('');
+    const [telefone, setTelefone] = useState('');
+
+    const originalNome = useRef('');
+    const originalTelefone = useRef('');
 
     const [modalVisible, setModalVisible] = useState(false);
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
-    const handleSavePassword = () => {
+    useEffect(() => {
+        async function carregarUsuario() {
+            const id = await AsyncStorage.getItem('userId');
+            if (!id) return;
+            const user = await getUserById(Number(id));
+            if (!user) return;
+
+            setUserId(Number(id));
+            setNome(user.nome);
+            setEmail(user.email);
+            setCpf(formatCpfDisplay(user.cpf));
+            setTelefone(formatTelDisplay(user.telefone));
+
+            originalNome.current = user.nome;
+            originalTelefone.current = formatTelDisplay(user.telefone);
+        }
+        carregarUsuario();
+    }, []);
+
+    const handleSalvar = async () => {
+        if (!nome.trim()) {
+            Alert.alert('Atenção', 'O nome não pode estar vazio.');
+            return;
+        }
+        try {
+            const telDigits = telefone.replace(/\D/g, '');
+            await updateUser(userId, nome.trim(), telDigits || null);
+            originalNome.current = nome.trim();
+            originalTelefone.current = telefone;
+            Alert.alert('Sucesso', 'Dados salvos com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar:', error);
+            Alert.alert('Erro', 'Não foi possível salvar os dados.');
+        }
+    };
+
+    const handleCancelar = () => {
+        setNome(originalNome.current);
+        setTelefone(originalTelefone.current);
+        router.push('/perfil');
+    };
+
+    const handleSavePassword = async () => {
         if (!password || !confirmPassword) {
-            alert("Preencha todos os campos!");
+            Alert.alert('Atenção', 'Preencha todos os campos!');
             return;
         }
-
         if (password !== confirmPassword) {
-            alert("As senhas não coincidem!");
+            Alert.alert('Atenção', 'As senhas não coincidem!');
             return;
         }
-
         if (password.length < 6) {
-            alert("A senha deve ter pelo menos 6 caracteres!");
+            Alert.alert('Atenção', 'A senha deve ter pelo menos 6 caracteres!');
             return;
         }
-
-        console.log("Nova senha:", password);
-        alert("Senha alterada com sucesso!");
-
-        setPassword("");
-        setConfirmPassword("");
-        setModalVisible(false);
+        try {
+            await updateUserPassword(userId, password);
+            Alert.alert('Sucesso', 'Senha alterada com sucesso!');
+            setPassword('');
+            setConfirmPassword('');
+            setModalVisible(false);
+        } catch (error) {
+            console.error('Erro ao alterar senha:', error);
+            Alert.alert('Erro', 'Não foi possível alterar a senha.');
+        }
     };
 
     return (
@@ -64,7 +139,6 @@ export default function Index() {
                             source={require('@/assets/img/FOTOFREELANCER1.png')}
                             style={styles.profileImage}
                         />
-
                         <TouchableOpacity
                             style={styles.profileOverlay}
                             onPress={() => console.log('Trocar foto de perfil')}
@@ -83,7 +157,7 @@ export default function Index() {
 
                 <View style={styles.formContainer}>
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Name</Text>
+                        <Text style={styles.label}>Nome</Text>
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 style={styles.input}
@@ -91,13 +165,9 @@ export default function Index() {
                                 onChangeText={setNome}
                                 placeholder="Seu nome"
                                 placeholderTextColor={Colors.cinza}
+                                autoCapitalize="words"
                             />
-                            <TouchableOpacity
-                                style={styles.editButton}
-                                onPress={() => setEditandoNome(!editandoNome)}
-                            >
-                                <Feather name="edit-2" size={18} color={Colors.marrom} />
-                            </TouchableOpacity>
+                            <Feather name="edit-2" size={18} color={Colors.marrom} style={styles.editIcon} />
                         </View>
                     </View>
 
@@ -106,10 +176,9 @@ export default function Index() {
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 style={[styles.input, styles.disabledInput]}
-                                value="AndreyAlves@gmail.com"
-                                placeholder="Seu e-mail"
-                                placeholderTextColor={Colors.cinza}
+                                value={email}
                                 editable={false}
+                                placeholderTextColor={Colors.cinza}
                             />
                             <View style={styles.lockIcon}>
                                 <Feather name="lock" size={16} color={Colors.cinza} />
@@ -122,10 +191,9 @@ export default function Index() {
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 style={[styles.input, styles.disabledInput]}
-                                value="987.654.321-00"
-                                placeholder="Seu CPF"
-                                placeholderTextColor={Colors.cinza}
+                                value={cpf}
                                 editable={false}
+                                placeholderTextColor={Colors.cinza}
                             />
                             <View style={styles.lockIcon}>
                                 <Feather name="lock" size={16} color={Colors.cinza} />
@@ -134,22 +202,18 @@ export default function Index() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Telephone</Text>
+                        <Text style={styles.label}>Telefone</Text>
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 style={styles.input}
                                 value={telefone}
-                                onChangeText={setTelefone}
+                                onChangeText={(v) => setTelefone(formatTelInput(v))}
                                 placeholder="Seu telefone"
                                 placeholderTextColor={Colors.cinza}
                                 keyboardType="phone-pad"
+                                maxLength={15}
                             />
-                            <TouchableOpacity
-                                style={styles.editButton}
-                                onPress={() => setEditandoTelefone(!editandoTelefone)}
-                            >
-                                <Feather name="edit-2" size={18} color={Colors.marrom} />
-                            </TouchableOpacity>
+                            <Feather name="edit-2" size={18} color={Colors.marrom} style={styles.editIcon} />
                         </View>
                     </View>
 
@@ -162,24 +226,10 @@ export default function Index() {
                     </TouchableOpacity>
 
                     <View style={styles.buttonContainer}>
-                        <TouchableOpacity
-                            style={styles.saveButton}
-                            onPress={() => {
-                                console.log("Dados salvos:", { nome, telefone });
-                                alert("Dados salvos com sucesso!");
-                            }}
-                        >
+                        <TouchableOpacity style={styles.saveButton} onPress={handleSalvar}>
                             <Text style={styles.saveButtonText}>SALVAR</Text>
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.cancelButton}
-                            onPress={() => {
-                                setNome("Andrey Alves");
-                                setTelefone("(11) 98765-4321");
-                                router.push('/perfil');
-                            }}
-                        >
+                        <TouchableOpacity style={styles.cancelButton} onPress={handleCancelar}>
                             <Text style={styles.cancelButtonText}>CANCELAR</Text>
                         </TouchableOpacity>
                     </View>
@@ -220,14 +270,13 @@ export default function Index() {
                             <TouchableOpacity
                                 style={styles.modalCancelButton}
                                 onPress={() => {
-                                    setPassword("");
-                                    setConfirmPassword("");
+                                    setPassword('');
+                                    setConfirmPassword('');
                                     setModalVisible(false);
                                 }}
                             >
                                 <Text style={styles.modalCancelButtonText}>Cancelar</Text>
                             </TouchableOpacity>
-
                             <TouchableOpacity
                                 style={styles.modalConfirmButton}
                                 onPress={handleSavePassword}
@@ -259,10 +308,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: Colors.preto,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 2.5,
         elevation: 4,
@@ -286,10 +332,7 @@ const styles = StyleSheet.create({
         borderWidth: 4,
         borderColor: Colors.bege,
         shadowColor: Colors.preto,
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 4.65,
         elevation: 8,
@@ -366,7 +409,7 @@ const styles = StyleSheet.create({
     disabledInput: {
         color: Colors.cinza,
     },
-    editButton: {
+    editIcon: {
         padding: 8,
     },
     lockIcon: {
@@ -398,10 +441,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: Colors.preto,
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
+        shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
@@ -439,10 +479,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 25,
         shadowColor: Colors.preto,
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
         elevation: 5,

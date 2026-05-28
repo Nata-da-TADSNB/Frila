@@ -1,9 +1,23 @@
 import { Footer } from "@/components/footer";
 import colors from "@/constants/Colors";
+import { getPedidosByUsuario, updatePedidoStatus } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+const FOTO_MAP = {
+    'FOTOFREELANCER1': require('@/assets/img/FOTOFREELANCER1.png'),
+    'FOTOFREELANCER': require('@/assets/img/FOTOFREELANCER.png'),
+    'MULHER1': require('@/assets/img/MULHER1.jpg'),
+    'MULHER2': require('@/assets/img/MULHER2.jpg'),
+    'HOMEM2': require('@/assets/img/HOMEM2.jpg'),
+    'HOMEM3': require('@/assets/img/HOMEM3.jpg'),
+    'HOMEM4': require('@/assets/img/HOMEM4.jpg'),
+    'HOMEM5': require('@/assets/img/HOMEM5.jpg'),
+};
+const DEFAULT_FOTO = require('@/assets/img/FOTOFREELANCER1.png');
 
 // -------------------- COMPONENTS -------------------- //
 
@@ -363,54 +377,50 @@ function CardServico({
 
 export default function Index() {
     const router = useRouter();
+    const [pedidos, setPedidos] = useState([]);
     const [popupConfirmarVisible, setPopupConfirmarVisible] = useState(false);
     const [popupAvaliacaoVisible, setPopupAvaliacaoVisible] = useState(false);
     const [popupCancelarVisible, setPopupCancelarVisible] = useState(false);
     const [popupReembolsoVisible, setPopupReembolsoVisible] = useState(false);
-
     const [servicoSelecionado, setServicoSelecionado] = useState(null);
 
-    const handleConfirmarPress = (servico) => {
-        setServicoSelecionado(servico);
-        setPopupConfirmarVisible(true);
-    };
+    const carregarPedidos = useCallback(async () => {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return;
+        const rows = await getPedidosByUsuario(Number(userId));
+        setPedidos(rows);
+    }, []);
 
-    const handleCancelarPress = (servico) => {
-        setServicoSelecionado(servico);
-        setPopupCancelarVisible(true);
-    };
+    useFocusEffect(useCallback(() => { carregarPedidos(); }, [carregarPedidos]));
 
-    const handleReembolsoPress = (servico) => {
-        setServicoSelecionado(servico);
-        setPopupReembolsoVisible(true);
-    };
+    const handleConfirmarPress = (pedido) => { setServicoSelecionado(pedido); setPopupConfirmarVisible(true); };
+    const handleCancelarPress = (pedido) => { setServicoSelecionado(pedido); setPopupCancelarVisible(true); };
+    const handleReembolsoPress = (pedido) => { setServicoSelecionado(pedido); setPopupReembolsoVisible(true); };
 
-    const handleConfirmarPedido = () => {
+    const handleConfirmarPedido = async () => {
+        if (servicoSelecionado) {
+            await updatePedidoStatus(servicoSelecionado.id_pedido, 'Concluído');
+            await carregarPedidos();
+        }
         setPopupConfirmarVisible(false);
-        setTimeout(() => {
-            setPopupAvaliacaoVisible(true);
-        }, 300);
+        setTimeout(() => setPopupAvaliacaoVisible(true), 300);
     };
 
     const handleAvaliar = (nota) => {
-        console.log(`Avaliação do comprador ${servicoSelecionado?.nome}: ${nota} estrelas`);
         setPopupAvaliacaoVisible(false);
         setServicoSelecionado(null);
     };
 
-    const handleCancelarPedido = () => {
-        console.log(`Pedido cancelado para ${servicoSelecionado?.nome}`);
+    const handleCancelarPedido = async () => {
+        if (servicoSelecionado) {
+            await updatePedidoStatus(servicoSelecionado.id_pedido, 'Cancelado');
+            await carregarPedidos();
+        }
         setPopupCancelarVisible(false);
         setServicoSelecionado(null);
     };
 
-    const handleCancelarReembolso = () => {
-        console.log(`Reembolso cancelado para ${servicoSelecionado?.nome}`);
-        setServicoSelecionado(null);
-    };
-
     const handleSuporte = () => {
-        console.log(`Redirecionando para suporte - ${servicoSelecionado?.nome}`);
         setServicoSelecionado(null);
         router.push('/suporte');
     };
@@ -426,90 +436,48 @@ export default function Index() {
                     <Text style={styles.title}>Pedidos</Text>
                 </View>
 
-                <CardServico
-                    nome="João Silva"
-                    status="Em Andamento"
-                    mensagemCancelamento="1 hora pra cancelar"
-                    foto={require('@/assets/img/HOMEM5.jpg')}
-                    onConfirmarPress={() => handleConfirmarPress({ nome: "João Silva" })}
-                    onCancelarPress={() => handleCancelarPress({ nome: "João Silva" })}
-                />
+                {pedidos.length === 0 && (
+                    <Text style={styles.emptyText}>Você ainda não tem pedidos.</Text>
+                )}
 
-                <CardServico
-                    nome="João Pedro"
-                    status="Em Andamento"
-                    foto={require('@/assets/img/HOMEM4.jpg')}
-                    onConfirmarPress={() => handleConfirmarPress({ nome: "João Pedro" })}
-                    onCancelarPress={() => handleCancelarPress({ nome: "João Pedro" })}
-                    onReembolsoPress={() => handleReembolsoPress({ nome: "João Pedro" })}
-                    mostrarReembolso={true}
-                />
-
-                <CardServico
-                    nome="Maria Santos"
-                    status="Concluído"
-                    foto={require('@/assets/img/MULHER2.jpg')}
-                    onConfirmarPress={() => handleConfirmarPress({ nome: "Maria Santos" })}
-                    onCancelarPress={() => handleCancelarPress({ nome: "Maria Santos" })}
-                />
-
-                <CardServico
-                    nome="Pedro Oliveira"
-                    status="Cancelado"
-                    mensagemCancelamento="1 hora pra cancelar"
-                    foto={require('@/assets/img/HOMEM3.jpg')}
-                    onConfirmarPress={() => handleConfirmarPress({ nome: "Pedro Oliveira" })}
-                    onCancelarPress={() => handleCancelarPress({ nome: "Pedro Oliveira" })}
-                />
-
-                <CardServico
-                    nome="Ana Souza"
-                    status="Reembolso"
-                    motivoReembolso="Aguardando análise do suporte"
-                    foto={require('@/assets/img/MULHER1.jpg')}
-                    onConfirmarPress={() => handleConfirmarPress({ nome: "Ana Souza" })}
-                    onCancelarPress={() => handleCancelarPress({ nome: "Ana Souza" })}
-                />
+                {pedidos.map((pedido) => (
+                    <CardServico
+                        key={pedido.id_pedido}
+                        nome={pedido.nome_contato}
+                        status={pedido.status}
+                        mensagemCancelamento={pedido.mensagem_cancelamento}
+                        motivoReembolso={pedido.motivo_reembolso}
+                        foto={FOTO_MAP[pedido.foto_id] ?? DEFAULT_FOTO}
+                        mostrarReembolso={pedido.mostrar_reembolso === 1}
+                        onConfirmarPress={() => handleConfirmarPress(pedido)}
+                        onCancelarPress={() => handleCancelarPress(pedido)}
+                        onReembolsoPress={() => handleReembolsoPress(pedido)}
+                    />
+                ))}
 
                 <PopupConfirmarPedido
                     visible={popupConfirmarVisible}
-                    onClose={() => {
-                        setPopupConfirmarVisible(false);
-                        setServicoSelecionado(null);
-                    }}
+                    onClose={() => { setPopupConfirmarVisible(false); setServicoSelecionado(null); }}
                     onConfirm={handleConfirmarPedido}
-                    nomeServico={servicoSelecionado?.nome}
                 />
 
                 <PopupAvaliacao
                     visible={popupAvaliacaoVisible}
-                    onClose={() => {
-                        setPopupAvaliacaoVisible(false);
-                        setServicoSelecionado(null);
-                    }}
+                    onClose={() => { setPopupAvaliacaoVisible(false); setServicoSelecionado(null); }}
                     onAvaliar={handleAvaliar}
-                    nomeComprador={servicoSelecionado?.nome}
                 />
 
                 <PopupCancelarPedido
                     visible={popupCancelarVisible}
-                    onClose={() => {
-                        setPopupCancelarVisible(false);
-                        setServicoSelecionado(null);
-                    }}
+                    onClose={() => { setPopupCancelarVisible(false); setServicoSelecionado(null); }}
                     onConfirm={handleCancelarPedido}
-                    nomeServico={servicoSelecionado?.nome}
                 />
 
                 <PopupReembolso
                     visible={popupReembolsoVisible}
-                    onClose={() => {
-                        setPopupReembolsoVisible(false);
-                        setServicoSelecionado(null);
-                    }}
-                    onCancel={handleCancelarReembolso}
+                    onClose={() => { setPopupReembolsoVisible(false); setServicoSelecionado(null); }}
+                    onCancel={() => setServicoSelecionado(null)}
                     onSuporte={handleSuporte}
-                    nomeServico={servicoSelecionado?.nome}
                 />
             </ScrollView>
 
@@ -535,6 +503,13 @@ const styles = StyleSheet.create({
         fontSize: 32,
         color: colors.preto,
         fontWeight: '600'
+    },
+
+    emptyText: {
+        textAlign: 'center',
+        color: colors.cinza,
+        fontSize: 16,
+        marginTop: 40,
     },
 
     content: {

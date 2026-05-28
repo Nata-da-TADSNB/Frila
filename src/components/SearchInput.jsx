@@ -1,24 +1,27 @@
-import { View, TextInput, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import colors from "@/constants/Colors";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { StyleSheet, TextInput, View } from "react-native";
+import colors from "@/constants/Colors";
 
-export function SearchInput({ placeholder }) {
+export function SearchInput({ placeholder, value, onChangeText }) {
     const router = useRouter();
-    
+
     return (
-        <BlurView intensity={60} tint="light" style={styles.container} >
+        <BlurView intensity={60} tint="light" style={styles.container}>
             <TextInput
                 placeholder={placeholder}
                 placeholderTextColor={colors.cinza}
                 style={styles.input}
+                value={value}
+                onChangeText={onChangeText}
+                onFocus={() => { if (!onChangeText) router.push("/search"); }}
             />
             <Ionicons
-            name="search" 
-            size={20} 
-            color={colors.preto}
-            onPress={() => router.push("/search")}
+                name="search"
+                size={20}
+                color={colors.preto}
+                onPress={() => router.push("/search")}
             />
         </BlurView>
     );
@@ -34,10 +37,8 @@ const styles = StyleSheet.create({
         width: "60%",
         padding: 15,
         overflow: "hidden",
-
         boxShadow: "0px 0px 4px rgba(0, 0, 0, 0.25)",
     },
-
     input: {
         fontSize: 16,
         flex: 1,

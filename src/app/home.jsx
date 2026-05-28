@@ -2,10 +2,12 @@ import { Footer } from "@/components/footer";
 import Screen from "@/components/screen";
 import { SearchInput } from "@/components/SearchInput";
 import { ServiceView } from "@/components/serviceView";
+import { SERVICOS_DATA } from "@/constants/servicosData";
 import colors from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -15,68 +17,24 @@ import {
     View
 } from "react-native";
 
-const servicosData = [
-    {
-        id: 1,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 2,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-    {
-        id: 3,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 4,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-    {
-        id: 5,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 6,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-];
+const FAVORITES_KEY = 'favoriteServices';
 
 export default function Index() {
-    const router = useRouter();
     const [likedServices, setLikedServices] = useState([]);
 
-    const handleLikePress = (serviceId) => {
+    useFocusEffect(useCallback(() => {
+        AsyncStorage.getItem(FAVORITES_KEY).then(stored => {
+            if (stored) setLikedServices(JSON.parse(stored));
+        });
+    }, []));
+
+    const handleLikePress = async (serviceId) => {
         setLikedServices(prev => {
-            if (prev.includes(serviceId)) {
-                return prev.filter(id => id !== serviceId);
-            } else {
-                return [...prev, serviceId];
-            }
+            const next = prev.includes(serviceId)
+                ? prev.filter(id => id !== serviceId)
+                : [...prev, serviceId];
+            AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+            return next;
         });
     };
 
@@ -92,7 +50,6 @@ export default function Index() {
                         showsVerticalScrollIndicator={false}
                         stickyHeaderIndices={[1]}
                     >
-
                         <View>
                             <Text style={styles.nameApp}>FRILA</Text>
                         </View>
@@ -107,7 +64,7 @@ export default function Index() {
                         </View>
 
                         <View style={styles.containerServicos}>
-                            {servicosData.map((servico) => (
+                            {SERVICOS_DATA.map((servico) => (
                                 <ServiceView
                                     key={servico.id}
                                     id={servico.id}
@@ -116,17 +73,16 @@ export default function Index() {
                                     profissao={servico.profissao}
                                     descricao={servico.descricao}
                                     avaliacao={servico.avaliacao}
+                                    contactId={servico.contactId}
+                                    contactPhotoId={servico.photoId}
                                     isLiked={likedServices.includes(servico.id)}
                                     onLikePress={handleLikePress}
                                 />
                             ))}
                         </View>
-
                     </ScrollView>
-
                 </KeyboardAvoidingView>
             </Screen>
-
             <Footer />
         </View>
     );
@@ -138,7 +94,7 @@ const styles = StyleSheet.create({
     },
     containerScroll: {
         flexGrow: 1,
-        paddingBottom: 120
+        paddingBottom: 120,
     },
     nameApp: {
         fontSize: 100,
@@ -147,7 +103,7 @@ const styles = StyleSheet.create({
     inputContainer: {
         alignItems: "center",
         width: "100%",
-        backgroundColor: "transparent"
+        backgroundColor: "transparent",
     },
     containerFilters: {
         flexDirection: "row",
@@ -161,8 +117,7 @@ const styles = StyleSheet.create({
     },
     containerServicos: {
         width: "100%",
-        height: "100%",
         marginTop: 10,
-        gap: 20
-    }
+        gap: 20,
+    },
 });

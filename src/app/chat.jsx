@@ -1,8 +1,10 @@
 import { Footer } from "@/components/footer";
 import Colors from '@/constants/Colors';
+import { getUserById } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
     FlatList,
     Image,
@@ -18,6 +20,17 @@ import {
 export default function ChatScreen() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('usuario');
+    const [nomeUsuario, setNomeUsuario] = useState('');
+
+    useFocusEffect(useCallback(() => {
+        async function carregarNome() {
+            const id = await AsyncStorage.getItem('userId');
+            if (!id) return;
+            const user = await getUserById(Number(id));
+            if (user) setNomeUsuario(user.nome);
+        }
+        carregarNome();
+    }, []));
     const [searchText, setSearchText] = useState('');
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [selectedChat, setSelectedChat] = useState(null);
@@ -134,6 +147,9 @@ export default function ChatScreen() {
         <SafeAreaView style={styles.container}>
             <View style={styles.titleContainer}>
                 <Text style={styles.titleText}>Chat</Text>
+                {nomeUsuario ? (
+                    <Text style={styles.subtitleText}>Olá, {nomeUsuario}</Text>
+                ) : null}
             </View>
 
             <View style={styles.header}>
@@ -247,7 +263,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: Colors.preto,
         textAlign: 'center',
-        paddingBottom: 15,
+        paddingBottom: 4,
+    },
+    subtitleText: {
+        fontSize: 14,
+        color: Colors.cinza,
+        textAlign: 'center',
+        paddingBottom: 10,
     },
     header: {
         paddingHorizontal: 20,

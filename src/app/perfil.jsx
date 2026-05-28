@@ -1,10 +1,26 @@
 import Colors from "@/constants/Colors";
+import { getUserById } from "@/database/database";
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Index() {
     const router = useRouter();
+    const [nomeUsuario, setNomeUsuario] = useState('');
+
+    useFocusEffect(
+        useCallback(() => {
+            async function carregarUsuario() {
+                const userId = await AsyncStorage.getItem('userId');
+                if (!userId) return;
+                const user = await getUserById(Number(userId));
+                if (user) setNomeUsuario(user.nome);
+            }
+            carregarUsuario();
+        }, [])
+    );
 
     const menuItems = [
         { icon: 'home', text: 'Home', route: '/home' },
@@ -14,12 +30,14 @@ export default function Index() {
         { icon: 'heart', text: 'Gostei', route: '/gostei' },
         { icon: 'help-circle', text: 'Suporte', route: '/suporte' },
         { icon: 'settings', text: 'Configurações', route: '/editarPerfil' },
-        { icon: 'log-out', text: 'Sair', route: '/login' },
+        { icon: 'log-out', text: 'Sair', route: null },
     ];
 
-    const handleNavigation = (route, text) => {
+    const handleNavigation = async (route, text) => {
         if (text === 'Sair') {
-            console.log('Fazer logout');
+            await AsyncStorage.removeItem('userId');
+            router.replace('/login');
+            return;
         }
         router.push(route);
     };
@@ -43,7 +61,7 @@ export default function Index() {
 
                 <View style={styles.infoContainer}>
                     <View style={styles.nameRatingRow}>
-                        <Text style={styles.nameText}>Hello, Andrey Silva</Text>
+                        <Text style={styles.nameText}>Olá, {nomeUsuario}</Text>
                         <View style={styles.ratingContainer}>
                             <Feather name="star" size={24} color={Colors.creme} />
                             <Text style={styles.ratingText}>4.5</Text>

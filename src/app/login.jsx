@@ -1,20 +1,16 @@
 import Background from "@/components/backgroundImage";
 import { Input } from "@/components/input";
 import colors from "@/constants/Colors";
-import { initDatabase, getUserByEmailAndSenha } from "@/database/database";
+import { getUserByEmailAndSenha, seedPropostaAndrey } from "@/database/database";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Index() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
-
-    useEffect(() => {
-        initDatabase().catch(err => console.error('DB init error:', err));
-    }, []);
 
     const handleLogin = async () => {
         if (!email.trim() || !senha.trim()) {
@@ -25,6 +21,7 @@ export default function Index() {
             const user = await getUserByEmailAndSenha(email.trim(), senha.trim());
             if (user) {
                 await AsyncStorage.setItem('userId', String(user.id_usuario));
+                await seedPropostaAndrey(user.id_usuario);
                 router.push("/home");
             } else {
                 Alert.alert('Erro', 'E-mail ou senha inválidos.');

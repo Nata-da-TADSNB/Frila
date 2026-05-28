@@ -4,31 +4,39 @@ import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 export function ServiceView({
+    id,
     nome,
     profissao,
     descricao,
     imageFreelancer,
     avaliacao,
-    id,
     isLiked = false,
-    onLikePress
+    onLikePress,
+    contactId,
+    contactPhotoId,
 }) {
-
     const handleLikePress = () => {
-        if (onLikePress) {
-            onLikePress(id);
-        }
+        if (onLikePress) onLikePress(id);
+    };
+
+    const handleChatPress = () => {
+        if (!contactId) return;
+        router.push({
+            pathname: '/conversaC',
+            params: {
+                contactId,
+                contactName: nome,
+                contactPhotoId: contactPhotoId ?? '',
+                userType: 'usuario',
+            },
+        });
     };
 
     return (
         <View style={styles.container}>
 
             <View style={styles.containerImagem}>
-
-                <Image
-                    source={imageFreelancer}
-                    style={styles.image}
-                />
+                <Image source={imageFreelancer} style={styles.image} />
 
                 <View style={styles.avaliacao}>
                     <Ionicons name="star-outline" size={16} color="white" />
@@ -42,48 +50,50 @@ export function ServiceView({
                         color={isLiked ? colors.rosa : "white"}
                     />
                 </Pressable>
-
             </View>
 
             <View style={styles.containerTexto}>
                 <Text style={styles.nome}>{nome}</Text>
                 <Text style={styles.profissao}>{profissao}</Text>
-                <Text style={styles.descricao} numberOfLines={5} ellipsizeMode="tail">{descricao}</Text>
+                <Text style={styles.descricao} numberOfLines={4} ellipsizeMode="tail">
+                    {descricao}
+                </Text>
 
-                <Pressable onPress={() => router.push("/detalhe")} style={styles.botao}>
-                    <Text style={styles.botaoText}>Ver Mais</Text>
-                </Pressable>
+                <View style={styles.botoes}>
+                    <Pressable onPress={handleChatPress} style={styles.botaoChat}>
+                        <Ionicons name="chatbubble-outline" size={16} color={colors.marrom} />
+                    </Pressable>
+                    <Pressable onPress={() => router.push("/detalhe")} style={styles.botao}>
+                        <Text style={styles.botaoText}>Ver Mais</Text>
+                    </Pressable>
+                </View>
             </View>
 
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
     container: {
         flexDirection: "row",
         width: "100%",
-        height: 160,
+        height: 170,
     },
-
     containerImagem: {
         width: "40%",
         marginRight: 10,
-        position: "relative"
-
+        position: "relative",
     },
-
     containerTexto: {
-        width: "60%",
+        flex: 1,
+        justifyContent: "space-between",
     },
-
     image: {
         width: "100%",
         height: "100%",
         borderRadius: 50,
-        resizeMode: "cover"
+        resizeMode: "cover",
     },
-
     avaliacao: {
         position: "absolute",
         top: 0,
@@ -95,13 +105,11 @@ const styles = StyleSheet.create({
         paddingVertical: 2,
         borderRadius: 20,
     },
-
     textAvaliacao: {
         color: colors.creme,
         fontSize: 15,
-        marginLeft: 3
+        marginLeft: 3,
     },
-
     favorito: {
         position: "absolute",
         top: 0,
@@ -110,41 +118,50 @@ const styles = StyleSheet.create({
         padding: 6,
         borderRadius: 20,
     },
-
     nome: {
         color: colors.preto,
-        fontSize: 25,
+        fontSize: 22,
         textTransform: "uppercase",
         fontFamily: "KohoMedium",
     },
-
     profissao: {
         fontFamily: "KohoMedium",
         color: colors.cinza,
-        fontSize: 16,
+        fontSize: 14,
         textTransform: "uppercase",
     },
-
     descricao: {
         flex: 1,
         fontFamily: "KohoMedium",
-        fontSize: 14,
+        fontSize: 13,
         color: colors.preto,
+        marginVertical: 4,
     },
-
-    botao: {
-        width: "50%",
-        backgroundColor: colors.marrom,
-        paddingVertical: 5,
+    botoes: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "flex-end",
+        gap: 8,
+        marginRight: 10,
+    },
+    botaoChat: {
+        borderWidth: 1,
+        borderColor: colors.marrom,
+        padding: 6,
         borderRadius: 20,
         alignItems: "center",
-        alignSelf: "flex-end",
-        marginRight: 10
+        justifyContent: "center",
     },
-
+    botao: {
+        backgroundColor: colors.marrom,
+        paddingVertical: 5,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        alignItems: "center",
+    },
     botaoText: {
         color: colors.creme,
-        fontSize: 18,
+        fontSize: 16,
         fontFamily: "KohoMedium",
     },
 });

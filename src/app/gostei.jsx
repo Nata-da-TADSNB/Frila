@@ -2,10 +2,12 @@ import { Footer } from "@/components/footer";
 import Screen from "@/components/screen";
 import { SearchInput } from "@/components/SearchInput";
 import { ServiceView } from "@/components/serviceView";
+import { SERVICOS_DATA } from "@/constants/servicosData";
 import colors from "@/constants/Colors";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Ionicons from "@expo/vector-icons/build/Ionicons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -15,74 +17,29 @@ import {
     View
 } from "react-native";
 
-const servicosData = [
-    {
-        id: 1,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 2,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-    {
-        id: 3,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 4,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-    {
-        id: 5,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER.png"),
-        nome: "Geovana Oliveira",
-        profissao: "Designer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 5,
-    },
-    {
-        id: 6,
-        imageFreelancer: require("@/assets/img/FOTOFREELANCER1.png"),
-        nome: "Jorge Silva",
-        profissao: "software developer",
-        descricao: "Ipsum fugiat elit dolore culpa duis. Reprehenderit ullamco dolor esse minim fugiat consectetur amet id nisi aliquip laborum esse enim. Culpa officia magna ad adipisicing. Amet Lorem ipsum amet fugia.",
-        avaliacao: 4.2,
-    },
-];
+const FAVORITES_KEY = 'favoriteServices';
 
 export default function Favoritos() {
-    const router = useRouter();
-    const [likedServices, setLikedServices] = useState([1, 3, 5]);
+    const [likedServices, setLikedServices] = useState([]);
 
-    const handleLikePress = (serviceId) => {
+    useFocusEffect(useCallback(() => {
+        AsyncStorage.getItem(FAVORITES_KEY).then(stored => {
+            if (stored) setLikedServices(JSON.parse(stored));
+            else setLikedServices([]);
+        });
+    }, []));
+
+    const handleLikePress = async (serviceId) => {
         setLikedServices(prev => {
-            if (prev.includes(serviceId)) {
-                return prev.filter(id => id !== serviceId);
-            } else {
-                return [...prev, serviceId];
-            }
+            const next = prev.includes(serviceId)
+                ? prev.filter(id => id !== serviceId)
+                : [...prev, serviceId];
+            AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+            return next;
         });
     };
 
-    const favoriteServices = servicosData.filter(servico =>
-        likedServices.includes(servico.id)
-    );
+    const favoriteServices = SERVICOS_DATA.filter(s => likedServices.includes(s.id));
 
     return (
         <View style={{ flex: 1 }}>
@@ -96,7 +53,6 @@ export default function Favoritos() {
                         showsVerticalScrollIndicator={false}
                         stickyHeaderIndices={[1]}
                     >
-
                         <View style={styles.headerContainer}>
                             <Text style={styles.title}>Gostei</Text>
                         </View>
@@ -106,7 +62,11 @@ export default function Favoritos() {
                         </View>
 
                         <View style={styles.containerFilters}>
-                            <Text style={styles.textFilter}>Meus favoritos</Text>
+                            <Text style={styles.textFilter}>
+                                {favoriteServices.length > 0
+                                    ? `${favoriteServices.length} favorito(s)`
+                                    : 'Meus favoritos'}
+                            </Text>
                             <Ionicons name="filter" size={20} color={colors.cinza} />
                         </View>
 
@@ -121,6 +81,8 @@ export default function Favoritos() {
                                         profissao={servico.profissao}
                                         descricao={servico.descricao}
                                         avaliacao={servico.avaliacao}
+                                        contactId={servico.contactId}
+                                        contactPhotoId={servico.photoId}
                                         isLiked={likedServices.includes(servico.id)}
                                         onLikePress={handleLikePress}
                                     />
@@ -135,12 +97,9 @@ export default function Favoritos() {
                                 </Text>
                             </View>
                         )}
-
                     </ScrollView>
-
                 </KeyboardAvoidingView>
             </Screen>
-
             <Footer />
         </View>
     );
@@ -152,7 +111,7 @@ const styles = StyleSheet.create({
     },
     containerScroll: {
         flexGrow: 1,
-        paddingBottom: 120
+        paddingBottom: 120,
     },
     headerContainer: {
         alignItems: 'center',
@@ -167,11 +126,12 @@ const styles = StyleSheet.create({
     inputContainer: {
         alignItems: "center",
         width: "100%",
-        backgroundColor: "transparent"
+        backgroundColor: "transparent",
     },
     containerFilters: {
         flexDirection: "row",
         justifyContent: "space-between",
+        alignItems: "center",
         marginTop: 20,
         marginBottom: 10,
     },
@@ -182,9 +142,8 @@ const styles = StyleSheet.create({
     },
     containerServicos: {
         width: "100%",
-        height: "100%",
         marginTop: 10,
-        gap: 20
+        gap: 20,
     },
     emptyContainer: {
         alignItems: 'center',
@@ -204,5 +163,5 @@ const styles = StyleSheet.create({
         color: colors.cinza,
         textAlign: 'center',
         paddingHorizontal: 40,
-    }
+    },
 });
