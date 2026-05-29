@@ -1,55 +1,56 @@
-const PUBLIC_KEY = process.env.EXPO_PUBLIC_MP_PUBLIC_KEY ?? '';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+
 const ACCESS_TOKEN = process.env.EXPO_PUBLIC_MP_ACCESS_TOKEN ?? '';
 
 // Modo demo: ativo quando as credenciais não estão configuradas
-export const DEMO_MODE = !PUBLIC_KEY || !ACCESS_TOKEN
-    || PUBLIC_KEY.includes('xxx')
-    || ACCESS_TOKEN.includes('xxx');
+export const DEMO_MODE = !ACCESS_TOKEN || ACCESS_TOKEN.includes('xxx');
 
-// Cartão de teste Mercado Pago (sandbox) - Alterado para nunca constar como vencido
-const TEST_CARD = {
-    card_number: '5031755734530604',
-    security_code: '123',
-    expiration_month: 11,
-    expiration_year: new Date().getFullYear() + 1,
-    cardholder_name: 'APRO',
-    payment_method_id: 'master',
-    payer_email: 'test_user_buyer@testuser.com',
-};
+/**
+ * Cria uma preferência de pagamento no Mercado Pago (Checkout Pro).
+ * Retorna a URL para redirecionar o usuário.
+ */
+async function criarPreferencia(valor, descricao) {
+    const redirectBase = Linking.createURL('pagamento');
 
-async function tokenizarCartao() {
-    const res = await fetch(
-        `https://api.mercadopago.com/v1/card_tokens?public_key=${PUBLIC_KEY}`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Sandbox': 'true',            // ← adicionado
-            },
-            body: JSON.stringify({
-                card_number: TEST_CARD.card_number,
-                security_code: TEST_CARD.security_code,
-                expiration_month: TEST_CARD.expiration_month,
-                expiration_year: TEST_CARD.expiration_year,
-                cardholder: {
-                    name: TEST_CARD.cardholder_name,
-                    identification: { type: 'CPF', number: '19119119100' },
+    const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+        },
+        body: JSON.stringify({
+            items: [
+                {
+                    title: descricao,
+                    quantity: 1,
+                    unit_price: Number(valor),
+                    currency_id: 'BRL',
                 },
-            }),
-        }
-    );
+            ],
+            back_urls: {
+                success: redirectBase + '?status=approved',
+                failure: redirectBase + '?status=failure',
+                pending: redirectBase + '?status=pending',
+            },
+            auto_return: 'approved',
+        }),
+    });
 
     const data = await res.json();
-    if (!res.ok || !data.id) {
-        throw new Error(data.message || 'Falha ao tokenizar cartão');
+    console.log('PREFERENCE RESPONSE:', JSON.stringify(data, null, 2));
+
+    if (!res.ok || !data.sandbox_init_point) {
+        throw new Error(data.message || 'Falha ao criar preferência');
     }
-    return data.id;
+
+    return data.sandbox_init_point; // URL do checkout em modo sandbox
 }
 
 /**
- * Processa um pagamento via Mercado Pago.
+ * Processa um pagamento via Mercado Pago Checkout Pro.
  * Em DEMO_MODE simula aprovação após 1,5s.
- * Com credenciais reais realiza tokenização + criação de pagamento no sandbox.
+ * Com credenciais reais abre o navegador do Mercado Pago.
  *
  * @param {number} valor - Valor em reais
  * @param {string} descricao - Descrição do serviço
@@ -65,34 +66,31 @@ export async function processarPagamento(valor, descricao) {
         };
     }
 
-    const token = await tokenizarCartao();
+    const checkoutUrl = await criarPreferencia(valor, descricao);
 
-    const res = await fetch('https://api.mercadopago.com/v1/payments', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${ACCESS_TOKEN}`,
-            'X-Idempotency-Key': `frila-${Date.now()}`,
-            'X-Sandbox': 'true',                // ← adicionado
-        },
-        body: JSON.stringify({
-            transaction_amount: Number(valor),
-            token,
-            description: descricao,
-            installments: 1,
-            payment_method_id: TEST_CARD.payment_method_id,
-            payer: { email: TEST_CARD.payer_email },
-        }),
-    });
+    const result = await WebBrowser.openAuthSessionAsync(
+        checkoutUrl,
+        Linking.createURL('pagamento')
+    );
 
-    const data = await res.json();
+    console.log('BROWSER RESULT:', JSON.stringify(result, null, 2));
 
-    if (!res.ok) {
-        throw new Error(data.message || 'Falha na criação do pagamento');
+    if (result.type === 'success') {
+        const url = result.url;
+        if (url.includes('status=approved')) {
+            return {
+                id: `MP-${Date.now()}`,
+                status: 'approved',
+                status_detail: 'accredited',
+            };
+        } else if (url.includes('status=failure')) {
+            throw new Error('Pagamento recusado pelo Mercado Pago');
+        } else {
+            throw new Error('Pagamento pendente de confirmação');
+        }
+    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+        throw new Error('Pagamento cancelado pelo usuário');
+    } else {
+        throw new Error('Erro ao abrir o checkout');
     }
-    if (data.status !== 'approved') {
-        throw new Error(`Pagamento ${data.status}: ${data.status_detail}`);
-    }
-
-    return data;
 }
